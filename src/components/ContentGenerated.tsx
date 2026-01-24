@@ -132,7 +132,7 @@ export default function ContentGenerated({ items, onDelete, onSelect, onAddToSou
                                             onChange={(e) => onUpdateStatus?.(item.id, e.target.value as any)}
                                             className={`appearance-none px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer focus:ring-0 transition-all border-none ${item.complianceStatus === 'Approved' ? 'bg-emerald-500 text-white' :
                                                     item.complianceStatus === 'Review' ? 'bg-amber-500 text-white' :
-                                                        'bg-slate-900 text-white'
+                                                        'bg-slate-800 text-white'
                                                 }`}
                                         >
                                             <option value="Draft" className="text-slate-900 bg-white">Draft</option>
