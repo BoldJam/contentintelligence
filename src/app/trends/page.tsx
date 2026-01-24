@@ -121,22 +121,24 @@ export default function TrendsPage() {
                 </div>
             </header>
 
-            {/* Filters */}
-            <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-                <Filter className={`w-4 h-4 mr-2 ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`} />
-                {PLATFORMS.map(platform => (
-                    <button
-                        key={platform}
-                        onClick={() => setSelectedPlatform(platform)}
-                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shadow-sm border ${selectedPlatform === platform
-                            ? (isFundBuzz ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-black border-white')
-                            : (isFundBuzz ? 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10 hover:text-white')
-                            }`}
-                    >
-                        {platform}
-                    </button>
-                ))}
-            </div>
+            {/* Filters - Only show for Akari */}
+            {!isFundBuzz && (
+                <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+                    <Filter className="w-4 h-4 text-gray-500 mr-2" />
+                    {PLATFORMS.map(platform => (
+                        <button
+                            key={platform}
+                            onClick={() => setSelectedPlatform(platform)}
+                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shadow-sm border ${selectedPlatform === platform
+                                ? 'bg-white text-black border-white'
+                                : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10 hover:text-white'
+                                }`}
+                        >
+                            {platform}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
