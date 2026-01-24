@@ -6,7 +6,8 @@ const parser = new XMLParser();
 const FEEDS = {
     TRENDS: 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=US',
     NEWS_HEALTH: 'https://news.google.com/rss/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtdHZLQUFQAQ?hl=en-US&gl=US&ceid=US%3Aen',
-    NEWS_SCIENCE: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtdHZHZ0pMVWlnQVAB?hl=en-US&gl=US&ceid=US%3Aen'
+    NEWS_SCIENCE: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtdHZHZ0pMVWlnQVAB?hl=en-US&gl=US&ceid=US%3Aen',
+    NEWS_FINANCE: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZd0NpQW1WdnNnQVAB?hl=en-US&gl=US&ceid=US%3Aen'
 };
 
 interface TrendItem {
@@ -33,10 +34,11 @@ async function fetchFeed(url: string) {
 
 export async function GET() {
     try {
-        const [trendsData, healthData, scienceData] = await Promise.all([
+        const [trendsData, healthData, scienceData, financeData] = await Promise.all([
             fetchFeed(FEEDS.TRENDS),
             fetchFeed(FEEDS.NEWS_HEALTH),
-            fetchFeed(FEEDS.NEWS_SCIENCE)
+            fetchFeed(FEEDS.NEWS_SCIENCE),
+            fetchFeed(FEEDS.NEWS_FINANCE)
         ]);
 
         const allTrends: TrendItem[] = [];
@@ -132,6 +134,7 @@ export async function GET() {
 
         processNews(healthData, 'Health');
         processNews(scienceData, 'Science');
+        processNews(financeData, 'Finance');
 
         // Sort by timestamp descending
         allTrends.sort((a, b) => b.timestamp - a.timestamp);

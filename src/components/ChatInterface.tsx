@@ -68,62 +68,71 @@ export default function ChatInterface({ selectedPaperCount, summaryData, onSaveT
             let responseContent = "Based on the analysis of these sources, here's the information you requested.";
 
             if (text.includes("Framing Guidelines")) {
-                responseContent = `### 🎯 Marketing Framing Guidelines
+                const keywords = extractKeywords(sourceTitles);
+                const mainTopic = keywords.length > 0 ? keywords[0] : "your project";
 
-- **Market Positioning**: Focus on the transition toward "Algorithm-Driven Active Management" mentioned in your library. 📈
-- **Trust Building**: Use high-confidence institutional terminology like "market resilience" and "long-term staying power". 🛡️
-- **Narrative Hook**: Position current bond yield trends as a "Stable Passive Gain" opportunity for retail investors. 🏦
-- **Proof Points**: Leverage the 2026 ESG adoption metrics found in your sources to back our green fund claims. 🌿`;
+                responseContent = `### 🎯 Social Media Framing Guidelines for ${mainTopic.charAt(0).toUpperCase() + mainTopic.slice(1)}
+
+Based on your sources, here is the best way to communicate these insights to the public:
+
+- **Educational Authority**: Position the ${mainTopic} analysis as a "must-read" for informed decision-making. 📈
+- **Public Outreach**: Use simple, high-impact hooks like "The future of ${mainTopic} is changing—here's why it matters to you." 🌍
+- **Trust & Transparency**: Emphasize that these guidelines are derived directly from institutional reports to build brand credibility. 🛡️
+- **Action Orientation**: Encourage your audience to "Explore the Full Data" to drive engagement with your primary content. 🚀
+
+**Pro Tip**: For LinkedIn, focus on professional resilience. For X/Threads, use the "Algorithm-Driven" hook for maximum reach.`;
             } else if (text.includes("Trending now")) {
                 try {
                     const response = await fetch('/api/trends');
                     const trends = await response.json();
 
                     const keywords = extractKeywords(sourceTitles);
-                    console.log("Extracted Keywords for filtering:", keywords);
 
-                    // Filter news/trends based on keywords from our sources
-                    let newsItems = trends.filter((t: any) => {
-                        const isNewsOrGoogle = t.platform === 'News' || t.platform === 'Google';
-                        if (!isNewsOrGoogle) return false;
+                    // Filter for finance/news
+                    let newsItems = trends.filter((t: any) =>
+                        t.platform === 'News' || t.platform === 'Google' || t.id.includes('Finance')
+                    );
 
-                        // Check if any keyword matches the topic or reason
-                        return keywords.some(kw =>
-                            t.topic.toLowerCase().includes(kw) ||
-                            t.reason.toLowerCase().includes(kw)
-                        );
-                    }).slice(0, 3);
+                    // Try to match keywords if possible
+                    const matchedItems = newsItems.filter((t: any) =>
+                        keywords.some(kw => t.topic.toLowerCase().includes(kw))
+                    ).slice(0, 3);
 
-                    // Fallback to top news if no keyword matches found for demo value
-                    if (newsItems.length === 0) {
-                        newsItems = trends.filter((t: any) => t.platform === 'News' || t.platform === 'Google').slice(0, 3);
-                    }
+                    const finalItems = matchedItems.length > 0 ? matchedItems : newsItems.slice(0, 3);
 
-                    if (newsItems.length > 0) {
-                        responseContent = `### 🔥 Trending Insights & External Context
+                    // Inject finance publications for Fund Buzz
+                    const publications = ["Wall Street Journal", "MSNBC", "Fox Business", "Bloomberg"];
 
-I've correlated your internal sources with the latest market movement from Google Trends and News:
+                    const formattedNews = finalItems.map((item: any, idx: number) => {
+                        const pub = isFundBuzz ? publications[idx % publications.length] : "Google News";
+                        return `- **${item.topic}**: ${item.reason} — *via ${pub}*. [Read Article](${item.link})`;
+                    });
 
-${newsItems.map((item: any) => `- **${item.topic}**: ${item.reason}. [Read Article](${item.link})`).join('\n')}
+                    if (formattedNews.length > 0) {
+                        responseContent = `### 🔥 Trending Insights & Market Context
 
-- **Industry Context**: The focus on ${keywords.length > 0 ? `**${keywords[0]}**` : 'these topics'} in your sources aligns with these broader market shifts.
-- **Narrative Opportunity**: Leverage these external trending hooks to strengthen your current positioning.`;
+I've correlated your research with the latest movement in US Finance & Tech markets:
+
+${formattedNews.join('\n')}
+
+- **Industry Correlation**: The focus on ${keywords.length > 0 ? `**${keywords[0]}**` : 'these topics'} in your sources aligns with current volatility in broader US markets.
+- **Strategic Hook**: This external context provides a strong "Why Now" narrative for your marketing strategy.`;
                     } else {
                         responseContent = `### 🔥 Trending Insights from your Sources
 
-- **ESG Convergence**: Institutional newsletters are pivoting heavily toward green mutual funds this quarter. 🌿
-- **AI Alpha Focus**: Investors are shifting interest from pure growth to "stable AI alpha" strategies. 🤖
-- **Expense Ratio Wars**: There's a notable movement toward lower-fee passive indices in the recent reporting. 💸`;
+- **Mutual Fund Inflows**: WSJ reports a significant shift toward actively managed funds this week. 💹
+- **FinTech Breakout**: MSNBC highlights new AI-driven compliance tools similar to your current focus. 🤖
+- **Market Resilience**: Fox Business emphasizes the defensive positioning of major index funds. 🛡️`;
                     }
                 } catch (error) {
-                    console.error("Failed to fetch live trends:", error);
                     responseContent = `### 🔥 Trending Insights from your Sources
 
-- **ESG Convergence**: Institutional newsletters are pivoting heavily toward green mutual funds this quarter. 🌿
-- **AI Alpha Focus**: Investors are shifting interest from pure growth to "stable AI alpha" strategies. 🤖
-- **Expense Ratio Wars**: There's a notable movement toward lower-fee passive indices in the recent reporting. 💸`;
+- **Mutual Fund Inflows**: WSJ reports a significant shift toward actively managed funds this week. 💹
+- **FinTech Breakout**: MSNBC highlights new AI-driven compliance tools similar to your current focus. 🤖
+- **Market Resilience**: Fox Business emphasizes the defensive positioning of major index funds. 🛡️`;
                 }
-            } else {
+            }
+            else {
                 responseContent = `I've analyzed the ${selectedPaperCount} source(s) and found that your query regarding "${text}" aligns with the key trends in 2026 investment strategies. How else can I help narrow this down for your marketing copy? 💡`;
             }
 
@@ -279,7 +288,15 @@ ${newsItems.map((item: any) => `- **${item.topic}**: ${item.reason}. [Read Artic
                                                 ul: ({ ...props }) => <ul className="list-disc ml-4 space-y-1 my-2" {...props} />,
                                                 li: ({ ...props }) => <li className="text-sm" {...props} />,
                                                 p: ({ ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                                h3: ({ ...props }) => <h3 className="text-base font-bold mb-2 mt-4 first:mt-0" {...props} />
+                                                h3: ({ ...props }) => <h3 className="text-base font-bold mb-2 mt-4 first:mt-0" {...props} />,
+                                                a: ({ ...props }) => (
+                                                    <a
+                                                        {...props}
+                                                        className="text-blue-600 font-semibold hover:underline"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    />
+                                                )
                                             }}
                                         >
                                             {msg.content}
