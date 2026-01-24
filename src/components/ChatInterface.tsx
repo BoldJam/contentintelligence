@@ -89,15 +89,23 @@ Based on your sources, here is the best way to communicate these insights to the
                     const keywords = extractKeywords(sourceTitles);
 
                     // Filter for finance/news
-                    let newsItems = trends.filter((t: any) =>
-                        t.platform === 'News' || t.platform === 'Google' || t.id.includes('Finance')
-                    );
+                    let newsItems = trends.filter((t: any) => {
+                        if (isFundBuzz) {
+                            // In Fund Buzz, only take Google Trends or specifically Finance-categorized news
+                            return t.platform === 'Google' || t.id.includes('Finance');
+                        }
+                        return t.platform === 'News' || t.platform === 'Google';
+                    });
 
                     // Try to match keywords if possible
                     const matchedItems = newsItems.filter((t: any) =>
-                        keywords.some(kw => t.topic.toLowerCase().includes(kw))
+                        keywords.some(kw =>
+                            t.topic.toLowerCase().includes(kw) ||
+                            (t.reason && t.reason.toLowerCase().includes(kw))
+                        )
                     ).slice(0, 3);
 
+                    // Fallback: If no matches, take the top filtered items
                     const finalItems = matchedItems.length > 0 ? matchedItems : newsItems.slice(0, 3);
 
                     // Inject finance publications for Fund Buzz
