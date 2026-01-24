@@ -71,14 +71,14 @@ export default function ChatInterface({ selectedPaperCount, summaryData, onSaveT
                 const keywords = extractKeywords(sourceTitles);
                 const mainTopic = keywords.length > 0 ? keywords[0] : "your project";
 
-                responseContent = `### 🎯 Social Media Framing Guidelines for ${mainTopic.charAt(0).toUpperCase() + mainTopic.slice(1)}
+                responseContent = `### Social Media Framing Guidelines for ${mainTopic.charAt(0).toUpperCase() + mainTopic.slice(1)}
 
 Based on your sources, here is the best way to communicate these insights to the public:
 
-- **Educational Authority**: Position the ${mainTopic} analysis as a "must-read" for informed decision-making. 📈
-- **Public Outreach**: Use simple, high-impact hooks like "The future of ${mainTopic} is changing—here's why it matters to you." 🌍
-- **Trust & Transparency**: Emphasize that these guidelines are derived directly from institutional reports to build brand credibility. 🛡️
-- **Action Orientation**: Encourage your audience to "Explore the Full Data" to drive engagement with your primary content. 🚀
+- **Educational Authority**: Position the ${mainTopic} analysis as a "must-read" for informed decision-making.
+- **Public Outreach**: Use simple, high-impact hooks like "The future of ${mainTopic} is changing—here's why it matters to you."
+- **Trust & Transparency**: Emphasize that these guidelines are derived directly from institutional reports to build brand credibility.
+- **Action Orientation**: Encourage your audience to "Explore the Full Data" to drive engagement with your primary content.
 
 **Pro Tip**: For LinkedIn, focus on professional resilience. For X/Threads, use the "Algorithm-Driven" hook for maximum reach.`;
             } else if (text.includes("Trending now")) {
@@ -117,7 +117,7 @@ Based on your sources, here is the best way to communicate these insights to the
                     });
 
                     if (formattedNews.length > 0) {
-                        responseContent = `### 🔥 Trending Insights & Market Context
+                        responseContent = `### Trending Insights & Market Context
 
 I've correlated your research with the latest movement in US Finance & Tech markets:
 
@@ -126,18 +126,18 @@ ${formattedNews.join('\n')}
 - **Industry Correlation**: The focus on ${keywords.length > 0 ? `**${keywords[0]}**` : 'these topics'} in your sources aligns with current volatility in broader US markets.
 - **Strategic Hook**: This external context provides a strong "Why Now" narrative for your marketing strategy.`;
                     } else {
-                        responseContent = `### 🔥 Trending Insights from your Sources
+                        responseContent = `### Trending Insights from your Sources
 
-- **Mutual Fund Inflows**: WSJ reports a significant shift toward actively managed funds this week. 💹
-- **FinTech Breakout**: MSNBC highlights new AI-driven compliance tools similar to your current focus. 🤖
-- **Market Resilience**: Fox Business emphasizes the defensive positioning of major index funds. 🛡️`;
+- **Mutual Fund Inflows**: WSJ reports a significant shift toward actively managed funds this week.
+- **FinTech Breakout**: MSNBC highlights new AI-driven compliance tools similar to your current focus.
+- **Market Resilience**: Fox Business emphasizes the defensive positioning of major index funds.`;
                     }
                 } catch (error) {
-                    responseContent = `### 🔥 Trending Insights from your Sources
+                    responseContent = `### Trending Insights from your Sources
 
-- **Mutual Fund Inflows**: WSJ reports a significant shift toward actively managed funds this week. 💹
-- **FinTech Breakout**: MSNBC highlights new AI-driven compliance tools similar to your current focus. 🤖
-- **Market Resilience**: Fox Business emphasizes the defensive positioning of major index funds. 🛡️`;
+- **Mutual Fund Inflows**: WSJ reports a significant shift toward actively managed funds this week.
+- **FinTech Breakout**: MSNBC highlights new AI-driven compliance tools similar to your current focus.
+- **Market Resilience**: Fox Business emphasizes the defensive positioning of major index funds.`;
                 }
             }
             else {
