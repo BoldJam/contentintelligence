@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+  --color-primary: #ec4899;
+  --color-secondary: #3b82f6;
+}
+
+:root {
+  --splat-1: rgba(236, 72, 153, 0.15);
+  --splat-2: rgba(59, 130, 246, 0.15);
+}
+
+/* Fund Buzz Theme */
+[data-product="fundbuzz"] {
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+  --color-primary: #2563eb;
+  --color-secondary: #1e40af;
+  --splat-1: rgba(37, 99, 235, 0.08);
+  --splat-2: rgba(30, 64, 175, 0.08);
+}
+
+body {
+  color: var(--color-foreground);
+  background: var(--color-background);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Art Splat Background Effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 15% 50%, var(--splat-1) 0%, transparent 25%),
+    radial-gradient(circle at 85% 30%, var(--splat-2) 0%, transparent 25%);
+  filter: blur(100px);
+  z-index: -1;
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+
+/* Utility for text gradients */
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+}
+
+/* Fund Buzz specific overrides - Professional SaaS Theme */
+
+/* Primary background colors - white base */
+[data-product="fundbuzz"] .bg-slate-900,
+[data-product="fundbuzz"] .bg-slate-950 {
+  background-color: #ffffff !important;
+}
+
+/* Secondary background colors - light gray */
+[data-product="fundbuzz"] .bg-slate-800 {
+  background-color: #f8fafc !important;
+}
+
+/* Card and panel backgrounds */
+[data-product="fundbuzz"] .bg-white\/5 {
+  background-color: #f1f5f9 !important;
+}
+
+[data-product="fundbuzz"] .bg-white\/10 {
+  background-color: #e2e8f0 !important;
+}
+
+/* Border colors - subtle grays */
+[data-product="fundbuzz"] .border-white\/5 {
+  border-color: #e2e8f0 !important;
+}
+
+[data-product="fundbuzz"] .border-white\/10 {
+  border-color: #cbd5e1 !important;
+}
+
+[data-product="fundbuzz"] .border-white\/20 {
+  border-color: #94a3b8 !important;
+}
+
+/* Text colors - dark on light */
+[data-product="fundbuzz"] .text-gray-200 {
+  color: #334155 !important;
+}
+
+[data-product="fundbuzz"] .text-gray-300 {
+  color: #475569 !important;
+}
+
+[data-product="fundbuzz"] .text-gray-400 {
+  color: #64748b !important;
+}
+
+[data-product="fundbuzz"] .text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+/* Hover states - refined */
+[data-product="fundbuzz"] .hover\:bg-white\/5:hover {
+  background-color: #f1f5f9 !important;
+}
+
+[data-product="fundbuzz"] .hover\:bg-white\/10:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* Group hover states */
+[data-product="fundbuzz"] .group:hover .group-hover\:bg-white\/10 {
+  background-color: #e2e8f0 !important;
+}
+
+/* Backdrop and overlay colors */
+[data-product="fundbuzz"] .bg-black\/60 {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+}
+
+[data-product="fundbuzz"] .bg-black\/20 {
+  background-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+[data-product="fundbuzz"] .bg-black\/40 {
+  background-color: rgba(15, 23, 42, 0.15) !important;
+}
+
+/* Refined shadows for professional look */
+[data-product="fundbuzz"] .shadow-2xl {
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-product="fundbuzz"] .shadow-xl {
+  box-shadow: 0 8px 30px -8px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Sticky header backgrounds */
+[data-product="fundbuzz"] .bg-white\/80 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Button and interactive element backgrounds */
+[data-product="fundbuzz"] .bg-slate-100 {
+  background-color: #f1f5f9 !important;
+}
+
+[data-product="fundbuzz"] .hover\:bg-slate-200:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* Scrollbar styling for Fund Buzz */
+[data-product="fundbuzz"] .scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+[data-product="fundbuzz"] .scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
