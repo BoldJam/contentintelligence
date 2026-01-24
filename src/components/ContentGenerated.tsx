@@ -126,20 +126,34 @@ export default function ContentGenerated({ items, onDelete, onSelect, onAddToSou
                             {isFundBuzz && !item.isLoading && (
                                 <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Compliance Status :</span>
-                                    <div className={`relative inline-flex items-center px-2 py-0.5 rounded transition-all ${item.complianceStatus === 'Approved' ? 'bg-emerald-500' :
-                                            item.complianceStatus === 'Review' ? 'bg-amber-500' :
-                                                'bg-slate-900'
-                                        }`}>
+                                    <div
+                                        style={{
+                                            backgroundColor: item.complianceStatus === 'Approved' ? '#10b981' : item.complianceStatus === 'Review' ? '#f59e0b' : '#334155',
+                                            borderRadius: '4px',
+                                            minWidth: '80px',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            position: 'relative',
+                                            padding: '4px 8px'
+                                        }}
+                                        className="transition-all"
+                                    >
                                         <select
                                             value={item.complianceStatus || 'Draft'}
                                             onChange={(e) => onUpdateStatus?.(item.id, e.target.value as any)}
-                                            className="appearance-none bg-transparent border-none p-0 pr-4 text-[10px] font-bold cursor-pointer focus:ring-0 text-white"
+                                            className="appearance-none bg-transparent border-none p-0 pr-4 text-[10px] font-bold cursor-pointer focus:ring-0 w-full text-center"
+                                            style={{
+                                                color: 'white',
+                                                backgroundColor: 'transparent',
+                                                WebkitAppearance: 'none'
+                                            }}
                                         >
-                                            <option value="Draft" className="text-slate-900 bg-white">Draft</option>
-                                            <option value="Review" className="text-slate-900 bg-white">Review</option>
-                                            <option value="Approved" className="text-slate-900 bg-white">Approved</option>
+                                            <option value="Draft" style={{ color: '#0f172a', backgroundColor: 'white' }}>Draft</option>
+                                            <option value="Review" style={{ color: '#0f172a', backgroundColor: 'white' }}>Review</option>
+                                            <option value="Approved" style={{ color: '#0f172a', backgroundColor: 'white' }}>Approved</option>
                                         </select>
-                                        <ChevronDown className="absolute right-1 w-2.5 h-2.5 pointer-events-none text-white/70" />
+                                        <ChevronDown className="absolute right-1 w-2.5 h-2.5 pointer-events-none text-white/90" />
                                     </div>
                                 </div>
                             )}

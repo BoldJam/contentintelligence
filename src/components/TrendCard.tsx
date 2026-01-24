@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Youtube, Linkedin, Search, Newspaper, Video, TrendingUp, ArrowUpRight, Info } from 'lucide-react';
 import type { Trend } from '@/lib/trendsData';
+import { useProduct } from '@/lib/productContext';
 
 interface TrendCardProps {
     trend: Trend;
@@ -8,6 +9,9 @@ interface TrendCardProps {
 }
 
 export default function TrendCard({ trend, index }: TrendCardProps) {
+    const { currentProduct } = useProduct();
+    const isFundBuzz = currentProduct === 'fundbuzz';
+
     const getIcon = (platform: string) => {
         switch (platform) {
             case 'YouTube': return Youtube;
@@ -48,40 +52,48 @@ export default function TrendCard({ trend, index }: TrendCardProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="group relative bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-5 cursor-pointer transition-colors"
+            className={`group relative border rounded-2xl p-5 cursor-pointer transition-all ${isFundBuzz
+                ? 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-lg shadow-sm'
+                : 'bg-white/5 border-white/10 hover:border-white/20'
+                }`}
         >
             <div className="flex items-start justify-between mb-4">
                 <div className={`p-2 rounded-xl ${colorClass}`}>
                     <Icon className="w-5 h-5" />
                 </div>
-                <div className="flex items-center gap-1 text-green-400 bg-green-400/10 px-2 py-1 rounded-lg text-xs font-medium">
+                <div className="flex items-center gap-1 text-green-600 bg-green-600/10 px-2 py-1 rounded-lg text-xs font-medium">
                     <TrendingUp className="w-3 h-3" />
                     <span>+{trend.growth}%</span>
                 </div>
             </div>
 
-            <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className={`text-lg font-semibold mb-2 line-clamp-2 transition-colors ${isFundBuzz ? 'text-slate-900 group-hover:text-blue-600' : 'text-white group-hover:text-primary'
+                }`}>
                 {trend.topic}
             </h3>
 
-            <p className="text-sm text-gray-400 mb-4 line-clamp-2">
+            <p className={`text-sm mb-4 line-clamp-2 ${isFundBuzz ? 'text-slate-600' : 'text-gray-400'}`}>
                 {trend.reason}
             </p>
 
-            <div className="flex items-center justify-between text-xs text-gray-500 border-t border-white/5 pt-4">
+            <div className={`flex items-center justify-between text-xs border-t pt-4 ${isFundBuzz ? 'text-slate-500 border-slate-100' : 'text-gray-500 border-white/5'
+                }`}>
                 <div className="flex items-center gap-1.5 relative group/tooltip">
-                    <span className="font-medium text-gray-400">{trend.volume} volume</span>
-                    <Info className="w-3 h-3 text-gray-500 cursor-pointer" />
+                    <span className={`font-medium ${isFundBuzz ? 'text-slate-500' : 'text-gray-400'}`}>{trend.volume} volume</span>
+                    <Info className={`w-3 h-3 cursor-pointer ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`} />
 
                     {/* Tooltip */}
-                    <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-slate-800 border border-white/10 rounded-lg shadow-xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-10">
-                        <p className="text-[10px] text-gray-300 leading-tight">
+                    <div className={`absolute bottom-full left-0 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-10 border ${isFundBuzz ? 'bg-white border-slate-200' : 'bg-slate-800 border-white/10'
+                        }`}>
+                        <p className={`text-[10px] leading-tight ${isFundBuzz ? 'text-slate-600' : 'text-gray-300'}`}>
                             {getVolumeDescription(trend.volume)}
                         </p>
-                        <div className="absolute bottom-[-4px] left-4 w-2 h-2 bg-slate-800 border-r border-b border-white/10 rotate-45"></div>
+                        <div className={`absolute bottom-[-4px] left-4 w-2 h-2 rotate-45 border-r border-b ${isFundBuzz ? 'bg-white border-slate-200' : 'bg-slate-800 border-white/10'
+                            }`}></div>
                     </div>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-primary">
+                <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity font-medium ${isFundBuzz ? 'text-blue-600' : 'text-primary'
+                    }`}>
                     <span>View details</span>
                     <ArrowUpRight className="w-3 h-3" />
                 </div>

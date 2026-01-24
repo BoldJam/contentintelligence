@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, RefreshCw, Clock, Filter, Search, Settings } from 'lucide-react';
 import { fetchTrends, refreshTrends, type Trend } from '@/lib/trendsData';
 import TrendCard from '@/components/TrendCard';
+import { useProduct } from '@/lib/productContext';
 
 const PLATFORMS = ['All', 'YouTube', 'LinkedIn', 'TikTok', 'Google', 'News'];
 
@@ -15,10 +16,12 @@ export default function TrendsPage() {
     const [selectedPlatform, setSelectedPlatform] = useState('All');
     const [isAutoRefresh, setIsAutoRefresh] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+    const { currentProduct } = useProduct();
+    const isFundBuzz = currentProduct === 'fundbuzz';
 
     useEffect(() => {
         loadTrends();
-    }, [selectedPlatform]);
+    }, [selectedPlatform, currentProduct]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -34,7 +37,11 @@ export default function TrendsPage() {
         setLoading(true);
         try {
             const data = await fetchTrends(selectedPlatform);
-            setTrends(data);
+            // In Fund Buzz, filter out health/science news
+            const filtered = isFundBuzz
+                ? data.filter(t => !t.id.includes('Health') && !t.id.includes('Science'))
+                : data;
+            setTrends(filtered);
         } catch (error) {
             console.error('Failed to load trends:', error);
         } finally {
@@ -47,9 +54,14 @@ export default function TrendsPage() {
         setLoading(true);
         try {
             const data = await refreshTrends();
-            const filtered = selectedPlatform === 'All'
+            let filtered = selectedPlatform === 'All'
                 ? data
                 : data.filter(t => t.platform === selectedPlatform);
+
+            if (isFundBuzz) {
+                filtered = filtered.filter(t => !t.id.includes('Health') && !t.id.includes('Science'));
+            }
+
             setTrends(filtered);
         } catch (error) {
             console.error('Failed to refresh trends:', error);
@@ -60,35 +72,39 @@ export default function TrendsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white p-6">
+        <div className={`min-h-screen p-6 transition-colors ${isFundBuzz ? 'bg-slate-50 text-slate-900' : 'bg-slate-900 text-white'}`}>
             {/* Header */}
-            <header className="flex items-center justify-between mb-8 sticky top-0 bg-slate-900/80 backdrop-blur-md z-20 py-4 -mx-6 px-6 border-b border-white/5">
+            <header className={`flex items-center justify-between mb-8 sticky top-0 backdrop-blur-md z-20 py-4 -mx-6 px-6 border-b transition-colors ${isFundBuzz ? 'bg-slate-50/80 border-slate-200' : 'bg-slate-900/80 border-white/5'
+                }`}>
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard" className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white">
+                    <Link href="/dashboard" className={`p-2 rounded-full transition-colors ${isFundBuzz ? 'hover:bg-slate-200 text-slate-500 hover:text-slate-900' : 'hover:bg-white/5 text-gray-400 hover:text-white'
+                        }`}>
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>
                         <h1 className="text-2xl font-bold flex items-center gap-2">
                             Trending Topics
-                            <span className="text-xs font-normal text-gray-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">North America</span>
+                            <span className={`text-xs font-normal px-2 py-0.5 rounded-full border ${isFundBuzz ? 'bg-white text-slate-600 border-slate-200' : 'text-gray-500 bg-white/5 border-white/10'
+                                }`}>North America</span>
                         </h1>
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                            <span>Real-time analysis</span>
-                            <span>•</span>
-                            <span className="text-blue-400">Source: Google Trends & News</span>
+                        <div className="flex items-center gap-2 text-xs">
+                            <span className={isFundBuzz ? 'text-slate-500' : 'text-gray-400'}>Real-time analysis</span>
+                            <span className={isFundBuzz ? 'text-slate-300' : 'text-gray-600'}>•</span>
+                            <span className={isFundBuzz ? 'text-blue-600' : 'text-blue-400'}>Source: Google News (Finance)</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-white/5 rounded-lg p-1 pr-3 border border-white/10">
+                    <div className={`flex items-center gap-2 rounded-lg p-1 pr-3 border transition-colors ${isFundBuzz ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 border-white/10'
+                        }`}>
                         <button
                             onClick={() => setIsAutoRefresh(!isAutoRefresh)}
-                            className={`p-1.5 rounded-md transition-all ${isAutoRefresh ? 'bg-green-500/20 text-green-400' : 'text-gray-400 hover:text-white'}`}
+                            className={`p-1.5 rounded-md transition-all ${isAutoRefresh ? 'bg-green-500/20 text-green-400' : (isFundBuzz ? 'text-slate-400 hover:text-slate-700' : 'text-gray-400 hover:text-white')}`}
                         >
                             <Clock className="w-4 h-4" />
                         </button>
-                        <span className="text-xs font-medium text-gray-400">
+                        <span className={`text-xs font-medium ${isFundBuzz ? 'text-slate-500' : 'text-gray-400'}`}>
                             {isAutoRefresh ? 'Auto-refresh on' : 'Auto-refresh off'}
                         </span>
                     </div>
@@ -96,7 +112,8 @@ export default function TrendsPage() {
                     <button
                         onClick={handleRefresh}
                         disabled={loading}
-                        className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 shadow-sm ${isFundBuzz ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-primary hover:bg-primary/90 text-white'
+                            }`}
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
@@ -106,14 +123,14 @@ export default function TrendsPage() {
 
             {/* Filters */}
             <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-                <Filter className="w-4 h-4 text-gray-500 mr-2" />
+                <Filter className={`w-4 h-4 mr-2 ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`} />
                 {PLATFORMS.map(platform => (
                     <button
                         key={platform}
                         onClick={() => setSelectedPlatform(platform)}
-                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${selectedPlatform === platform
-                            ? 'bg-white text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shadow-sm border ${selectedPlatform === platform
+                            ? (isFundBuzz ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-black border-white')
+                            : (isFundBuzz ? 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' : 'bg-white/5 text-gray-400 border-transparent hover:bg-white/10 hover:text-white')
                             }`}
                     >
                         {platform}
@@ -132,7 +149,7 @@ export default function TrendsPage() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="aspect-[4/3] bg-white/5 rounded-2xl animate-pulse"
+                                className={`aspect-[4/3] rounded-2xl animate-pulse ${isFundBuzz ? 'bg-slate-200' : 'bg-white/5'}`}
                             />
                         ))
                     ) : (
@@ -144,9 +161,9 @@ export default function TrendsPage() {
             </div>
 
             {!loading && trends.length === 0 && (
-                <div className="text-center py-20 text-gray-500">
-                    <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                    <p>No trending topics found for this filter.</p>
+                <div className="text-center py-20">
+                    <Search className={`w-12 h-12 mx-auto mb-4 opacity-20 ${isFundBuzz ? 'text-slate-900' : 'text-white'}`} />
+                    <p className={isFundBuzz ? 'text-slate-500' : 'text-gray-500'}>No trending topics found for this filter.</p>
                 </div>
             )}
         </div>
