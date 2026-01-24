@@ -369,7 +369,7 @@ export default function ProjectPage() {
     // Calculate left panel width based on state
     const leftPanelWidth = leftPanelCollapsed
         ? 64
-        : (selectedPaper || isPapersExpanded) ? 624 : 480; // 64px collapsed, 30% wider when showing details or expanded list
+        : (selectedPaper || isPapersExpanded) ? 500 : 384; // 64px collapsed, match Studio width
 
     return (
         <div className="h-screen bg-slate-900 text-white flex flex-col overflow-hidden">
