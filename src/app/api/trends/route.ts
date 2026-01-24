@@ -7,7 +7,7 @@ const FEEDS = {
     TRENDS: 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=US',
     NEWS_HEALTH: 'https://news.google.com/rss/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtdHZLQUFQAQ?hl=en-US&gl=US&ceid=US%3Aen',
     NEWS_SCIENCE: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtdHZHZ0pMVWlnQVAB?hl=en-US&gl=US&ceid=US%3Aen',
-    NEWS_FINANCE: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZd0NpQW1WdnNnQVAB?hl=en-US&gl=US&ceid=US%3Aen'
+    NEWS_FINANCE: 'https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRFFvSUwyMHZNRGx6TVdZU0JXVnVMVlZUR2dKVlV5Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen'
 };
 
 interface TrendItem {
