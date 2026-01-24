@@ -126,14 +126,14 @@ export default function ContentGenerated({ items, onDelete, onSelect, onAddToSou
                             {isFundBuzz && !item.isLoading && (
                                 <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Compliance Status :</span>
-                                    <div className="relative inline-flex items-center">
+                                    <div className={`relative inline-flex items-center px-2 py-0.5 rounded transition-all ${item.complianceStatus === 'Approved' ? 'bg-emerald-500' :
+                                            item.complianceStatus === 'Review' ? 'bg-amber-500' :
+                                                'bg-slate-900'
+                                        }`}>
                                         <select
                                             value={item.complianceStatus || 'Draft'}
                                             onChange={(e) => onUpdateStatus?.(item.id, e.target.value as any)}
-                                            className={`appearance-none px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer focus:ring-0 transition-all border-none ${item.complianceStatus === 'Approved' ? 'bg-emerald-500 text-white' :
-                                                    item.complianceStatus === 'Review' ? 'bg-amber-500 text-white' :
-                                                        'bg-slate-800 text-white'
-                                                }`}
+                                            className="appearance-none bg-transparent border-none p-0 pr-4 text-[10px] font-bold cursor-pointer focus:ring-0 text-white"
                                         >
                                             <option value="Draft" className="text-slate-900 bg-white">Draft</option>
                                             <option value="Review" className="text-slate-900 bg-white">Review</option>
