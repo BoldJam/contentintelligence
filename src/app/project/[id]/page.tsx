@@ -395,7 +395,7 @@ export default function ProjectPage() {
                 isOpen={isCustomizeTextOpen}
                 onClose={() => setIsCustomizeTextOpen(false)}
                 onGenerate={(title, format, layout, focus, boosts) => {
-                    const tempTitle = title || `${format} - ${importedPapers?.[0]?.title.substring(0, 30)}...`;
+                    const tempTitle = title || `${importedPapers?.[0]?.title.substring(0, 35)}...`;
                     const newItem: GeneratedContent = {
                         id: Date.now().toString(),
                         title: tempTitle,
@@ -410,8 +410,8 @@ export default function ProjectPage() {
                     // Simulate generation
                     setTimeout(() => {
                         const generatedText = generateStudioText(importedPapers || [], format, layout, focus, boosts);
-                        // Generate a more concise title based on content
-                        const conciseTitle = `${format.split(' ')[0]} - ${focus ? focus.substring(0, 15) : (importedPapers?.[0]?.title.substring(0, 20) || 'Market Analysis')}`;
+                        // Generate a more concise title based on content - no format prefix
+                        const conciseTitle = focus ? (focus.charAt(0).toUpperCase() + focus.slice(1).substring(0, 35)) : (importedPapers?.[0]?.title.substring(0, 35) || 'Market Analysis');
 
                         setGeneratedContent(prev =>
                             prev.map(item =>

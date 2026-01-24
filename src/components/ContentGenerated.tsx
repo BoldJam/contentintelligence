@@ -106,35 +106,43 @@ export default function ContentGenerated({ items, onDelete, onSelect, onAddToSou
 
                         {/* Content Info */}
                         <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-medium truncate ${isFundBuzz ? 'text-slate-900' : 'text-white'}`}>
+                            <div className={`text-sm font-medium truncate mb-0.5 ${isFundBuzz ? 'text-slate-900' : 'text-white'}`}>
                                 {item.title}
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-400">
+                                <span className="text-[10px] text-gray-400 font-medium">
                                     {getRelativeTime(item.createdAt)}
                                 </span>
-                                {isFundBuzz && !item.isLoading && (
+                                {item.format && (
                                     <>
-                                        <span className="text-gray-400">•</span>
-                                        <div className="relative inline-flex items-center" onClick={(e) => e.stopPropagation()}>
-                                            <select
-                                                value={item.complianceStatus || 'Draft'}
-                                                onChange={(e) => onUpdateStatus?.(item.id, e.target.value as any)}
-                                                className={`appearance-none bg-transparent border-none p-0 pr-4 text-[10px] font-bold cursor-pointer focus:ring-0 transition-colors ${item.complianceStatus === 'Approved' ? 'text-emerald-500' :
-                                                        item.complianceStatus === 'Review' ? 'text-amber-500' : 'text-slate-400'
-                                                    }`}
-                                            >
-                                                <option value="Draft" className="text-slate-900">Draft</option>
-                                                <option value="Review" className="text-slate-900">Review</option>
-                                                <option value="Approved" className="text-slate-900">Approved</option>
-                                            </select>
-                                            <ChevronDown className={`absolute right-0 w-2.5 h-2.5 pointer-events-none ${item.complianceStatus === 'Approved' ? 'text-emerald-500/50' :
-                                                    item.complianceStatus === 'Review' ? 'text-amber-500/50' : 'text-slate-400/50'
-                                                }`} />
-                                        </div>
+                                        <span className="text-gray-300 text-[10px]">•</span>
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isFundBuzz ? 'text-blue-600' : 'text-blue-400'}`}>
+                                            {item.format}
+                                        </span>
                                     </>
                                 )}
                             </div>
+
+                            {isFundBuzz && !item.isLoading && (
+                                <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Compliance Status :</span>
+                                    <div className="relative inline-flex items-center">
+                                        <select
+                                            value={item.complianceStatus || 'Draft'}
+                                            onChange={(e) => onUpdateStatus?.(item.id, e.target.value as any)}
+                                            className={`appearance-none px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer focus:ring-0 transition-all border-none ${item.complianceStatus === 'Approved' ? 'bg-emerald-500 text-white' :
+                                                    item.complianceStatus === 'Review' ? 'bg-amber-500 text-white' :
+                                                        'bg-slate-900 text-white'
+                                                }`}
+                                        >
+                                            <option value="Draft" className="text-slate-900 bg-white">Draft</option>
+                                            <option value="Review" className="text-slate-900 bg-white">Review</option>
+                                            <option value="Approved" className="text-slate-900 bg-white">Approved</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-1 w-2.5 h-2.5 pointer-events-none text-white/70" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* More Options */}
