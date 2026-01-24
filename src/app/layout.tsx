@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Akari v2",
+  title: "Fund Buzz",
   description: "Science-backed content creation",
   icons: {
-    icon: '/logo.png',
+    icon: '/favicon.png',
   },
 };
 
