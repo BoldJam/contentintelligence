@@ -1,6 +1,7 @@
 'use client';
 
-import { X, User, Calendar, MessageSquare, Send } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, User, Calendar, MessageSquare, Send, Pencil, Check } from 'lucide-react';
 import type { GeneratedContent } from '@/types/project';
 
 interface ComplianceItem {
@@ -14,11 +15,44 @@ interface ComplianceDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     onStatusChange: (newStatus: GeneratedContent['complianceStatus']) => void;
+    onUpdateContent?: (updates: { title?: string; assignee?: string }) => void;
     isFundBuzz?: boolean;
 }
 
-export default function ComplianceDetailsModal({ item, isOpen, onClose, onStatusChange, isFundBuzz }: ComplianceDetailsModalProps) {
+const ASSIGNEE_OPTIONS = [
+    { name: 'Unassigned', initials: '' },
+    { name: 'Huong Totten', initials: 'HT' },
+    { name: 'Raghav Babu', initials: 'RB' },
+    { name: 'John Miller', initials: 'JM' },
+];
+
+export default function ComplianceDetailsModal({ item, isOpen, onClose, onStatusChange, onUpdateContent, isFundBuzz }: ComplianceDetailsModalProps) {
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [editedTitle, setEditedTitle] = useState('');
+
+    useEffect(() => {
+        if (item) {
+            setEditedTitle(item.content.title);
+            setIsEditingTitle(false);
+        }
+    }, [item]);
+
     if (!isOpen || !item) return null;
+
+    const handleTitleSave = () => {
+        if (editedTitle.trim() && editedTitle !== item.content.title) {
+            onUpdateContent?.({ title: editedTitle.trim() });
+        }
+        setIsEditingTitle(false);
+    };
+
+    const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newAssignee = e.target.value === 'Unassigned' ? undefined : e.target.value;
+        onUpdateContent?.({ assignee: newAssignee });
+    };
+
+    const currentAssignee = item.content.assignee || 'Unassigned';
+    const assigneeData = ASSIGNEE_OPTIONS.find(a => a.name === currentAssignee) || ASSIGNEE_OPTIONS[0];
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -28,9 +62,42 @@ export default function ComplianceDetailsModal({ item, isOpen, onClose, onStatus
                 <div className="w-[70%] flex flex-col border-r border-slate-100">
                     {/* Header */}
                     <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-start">
-                        <div>
-                            <h2 className="text-2xl font-bold mb-2">{item.content.title}</h2>
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <div className="flex-1">
+                            {isEditingTitle ? (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={editedTitle}
+                                        onChange={(e) => setEditedTitle(e.target.value)}
+                                        className="text-2xl font-bold border-b-2 border-blue-500 focus:outline-none bg-transparent flex-1"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleTitleSave();
+                                            if (e.key === 'Escape') {
+                                                setEditedTitle(item.content.title);
+                                                setIsEditingTitle(false);
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        onClick={handleTitleSave}
+                                        className="p-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                                    >
+                                        <Check className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 group">
+                                    <h2 className="text-2xl font-bold mb-2">{item.content.title}</h2>
+                                    <button
+                                        onClick={() => setIsEditingTitle(true)}
+                                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
                                 <span>Project: {item.projectName}</span>
                                 <span>•</span>
                                 <span className="capitalize">{item.content.type}</span>
@@ -96,13 +163,27 @@ export default function ComplianceDetailsModal({ item, isOpen, onClose, onStatus
 
                         {/* Details */}
                         <div className="space-y-4">
+                            {/* Assignee Dropdown */}
                             <div>
                                 <label className="block text-xs font-bold uppercase text-slate-400 mb-2">Assignee</label>
-                                <div className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer border border-transparent hover:border-slate-200">
-                                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                                        <User className="w-4 h-4" />
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${currentAssignee === 'Unassigned'
+                                            ? 'bg-slate-100 text-slate-400'
+                                            : 'bg-indigo-100 text-indigo-600'
+                                        }`}>
+                                        {assigneeData.initials || <User className="w-4 h-4" />}
                                     </div>
-                                    <span className="text-sm font-medium text-slate-700">Unassigned</span>
+                                    <select
+                                        value={currentAssignee}
+                                        onChange={handleAssigneeChange}
+                                        className="flex-1 appearance-none px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    >
+                                        {ASSIGNEE_OPTIONS.map((option) => (
+                                            <option key={option.name} value={option.name}>
+                                                {option.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 

@@ -101,6 +101,17 @@ export default function CompliancePage() {
         }
     };
 
+    const handleUpdateContent = (projectId: string, contentId: string, updates: { title?: string; assignee?: string }) => {
+        const project = loadProject(projectId);
+        if (project) {
+            project.generatedContent = project.generatedContent.map(item =>
+                item.id === contentId ? { ...item, ...updates } : item
+            );
+            saveProject(project);
+            loadComplianceData(); // Refresh local state
+        }
+    };
+
     const getStatusStyles = (status?: string) => {
         switch (status) {
             case 'Approved':
@@ -134,6 +145,7 @@ export default function CompliancePage() {
                         <ComplianceBoard
                             items={complianceItems}
                             onStatusChange={handleUpdateStatus}
+                            onUpdateContent={handleUpdateContent}
                             isFundBuzz={isFundBuzz}
                         />
                     ) : (

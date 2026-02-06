@@ -164,7 +164,7 @@ export default function DashboardPage() {
                                     <div className="text-xs text-gray-500">
                                         <span>{formatDate(project.updatedAt)}</span>
                                         <span className="mx-2">•</span>
-                                        <span>{project.paperCount} {project.paperCount === 1 ? 'paper' : 'papers'}</span>
+                                        <span>{project.paperCount} {project.paperCount === 1 ? 'source' : 'sources'}</span>
                                     </div>
                                 </div>
                             </motion.div>

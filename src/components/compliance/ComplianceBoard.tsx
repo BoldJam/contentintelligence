@@ -24,10 +24,11 @@ interface ComplianceItem {
 interface ComplianceBoardProps {
     items: ComplianceItem[];
     onStatusChange: (projectId: string, contentId: string, newStatus: GeneratedContent['complianceStatus']) => void;
+    onUpdateContent?: (projectId: string, contentId: string, updates: { title?: string; assignee?: string }) => void;
     isFundBuzz?: boolean;
 }
 
-export default function ComplianceBoard({ items, onStatusChange, isFundBuzz }: ComplianceBoardProps) {
+export default function ComplianceBoard({ items, onStatusChange, onUpdateContent, isFundBuzz }: ComplianceBoardProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [selectedItem, setSelectedItem] = useState<ComplianceItem | null>(null);
 
@@ -115,6 +116,20 @@ export default function ComplianceBoard({ items, onStatusChange, isFundBuzz }: C
                         setSelectedItem({
                             ...selectedItem,
                             content: { ...selectedItem.content, complianceStatus: newStatus }
+                        });
+                    }
+                }}
+                onUpdateContent={(updates) => {
+                    if (selectedItem && onUpdateContent) {
+                        onUpdateContent(selectedItem.projectId, selectedItem.content.id, updates);
+                        // Optimistically update local state for the modal
+                        setSelectedItem({
+                            ...selectedItem,
+                            content: {
+                                ...selectedItem.content,
+                                title: updates.title ?? selectedItem.content.title,
+                                assignee: updates.assignee ?? selectedItem.content.assignee
+                            }
                         });
                     }
                 }}
