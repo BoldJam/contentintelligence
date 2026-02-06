@@ -4,6 +4,32 @@ import TopNavigation from '@/components/TopNavigation';
 import { useState, useMemo, useEffect } from 'react';
 import { MoreHorizontal, Calendar, TrendingUp, Eye, MousePointerClick, ThumbsUp, ChevronLeft, ChevronRight } from 'lucide-react';
 
+// Type Definitions
+interface PublishedPost {
+    id: string;
+    name: string;
+    impressions: string;
+    engagement: string;
+    clicks: string;
+    date: string;
+}
+
+interface ScheduledPost {
+    id: string;
+    name: string;
+    date: string;
+}
+
+interface ApprovedPost {
+    id: string;
+    name: string;
+    approvedBy: string;
+    date: string;
+}
+
+type AnyPost = PublishedPost | ScheduledPost | ApprovedPost;
+
+
 // Mock Data Generators
 const generatePublishedPosts = (count: number) => {
     return Array.from({ length: count }).map((_, i) => ({
@@ -211,36 +237,34 @@ export default function SchedulePage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {paginatedData.map((post) => (
+                                        {activeTab === 'published' && (paginatedData as PublishedPost[]).map((post) => (
                                             <tr key={post.id} className="hover:bg-slate-50 transition-colors">
                                                 <td className="px-6 py-4 font-medium text-slate-900 truncate max-w-[300px]">{post.name}</td>
-                                                {'impressions' in post && (
-                                                    <>
-                                                        <td className="px-6 py-4 text-slate-600">{post.impressions}</td>
-                                                        <td className="px-6 py-4 text-slate-600">{post.engagement}</td>
-                                                        <td className="px-6 py-4 text-slate-600">{post.clicks}</td>
-                                                        <td className="px-6 py-4 text-slate-500 text-right text-sm">{post.date}</td>
-                                                    </>
-                                                )}
-
-                                                {activeTab === 'scheduled' && 'date' in post && !('impressions' in post) && (
-                                                    <td className="px-6 py-4 text-orange-600 flex items-center gap-2">
-                                                        <Calendar className="w-4 h-4" />
-                                                        {post.date}
-                                                    </td>
-                                                )}
-
-                                                {activeTab === 'approved' && 'approvedBy' in post && (
-                                                    <>
-                                                        <td className="px-6 py-4 text-slate-600 flex items-center gap-2">
-                                                            <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold border border-orange-200">
-                                                                {post.approvedBy.split(' ').map((n: string) => n[0]).join('')}
-                                                            </div>
-                                                            {post.approvedBy}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-slate-500 text-sm">{post.date}</td>
-                                                    </>
-                                                )}
+                                                <td className="px-6 py-4 text-slate-600">{post.impressions}</td>
+                                                <td className="px-6 py-4 text-slate-600">{post.engagement}</td>
+                                                <td className="px-6 py-4 text-slate-600">{post.clicks}</td>
+                                                <td className="px-6 py-4 text-slate-500 text-right text-sm">{post.date}</td>
+                                            </tr>
+                                        ))}
+                                        {activeTab === 'scheduled' && (paginatedData as ScheduledPost[]).map((post) => (
+                                            <tr key={post.id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-4 font-medium text-slate-900 truncate max-w-[300px]">{post.name}</td>
+                                                <td className="px-6 py-4 text-orange-600 flex items-center gap-2">
+                                                    <Calendar className="w-4 h-4" />
+                                                    {post.date}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {activeTab === 'approved' && (paginatedData as ApprovedPost[]).map((post) => (
+                                            <tr key={post.id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-4 font-medium text-slate-900 truncate max-w-[300px]">{post.name}</td>
+                                                <td className="px-6 py-4 text-slate-600 flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold border border-orange-200">
+                                                        {post.approvedBy.split(' ').map((n: string) => n[0]).join('')}
+                                                    </div>
+                                                    {post.approvedBy}
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-500 text-sm">{post.date}</td>
                                             </tr>
                                         ))}
                                     </tbody>
