@@ -8,7 +8,8 @@ export interface GeneratedContent {
     content?: string;
     createdAt: Date;
     isLoading: boolean;
-    complianceStatus?: 'Draft' | 'Review' | 'Approved';
+    complianceStatus?: 'Draft' | 'Pending Review' | 'Approved';
+    assignee?: string;
 }
 
 export interface Project {

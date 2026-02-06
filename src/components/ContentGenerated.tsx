@@ -128,7 +128,7 @@ export default function ContentGenerated({ items, onDelete, onSelect, onAddToSou
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Compliance Status :</span>
                                     <div
                                         style={{
-                                            backgroundColor: item.complianceStatus === 'Approved' ? '#10b981' : item.complianceStatus === 'Review' ? '#f59e0b' : '#334155',
+                                            backgroundColor: item.complianceStatus === 'Approved' ? '#10b981' : item.complianceStatus === 'Pending Review' ? '#f59e0b' : '#334155',
                                             borderRadius: '4px',
                                             minWidth: '80px',
                                             display: 'inline-flex',
@@ -150,7 +150,7 @@ export default function ContentGenerated({ items, onDelete, onSelect, onAddToSou
                                             }}
                                         >
                                             <option value="Draft" style={{ color: '#0f172a', backgroundColor: 'white' }}>Draft</option>
-                                            <option value="Review" style={{ color: '#0f172a', backgroundColor: 'white' }}>Review</option>
+                                            <option value="Pending Review" style={{ color: '#0f172a', backgroundColor: 'white' }}>Pending Review</option>
                                             <option value="Approved" style={{ color: '#0f172a', backgroundColor: 'white' }}>Approved</option>
                                         </select>
                                         <ChevronDown className="absolute right-1 w-2.5 h-2.5 pointer-events-none text-white/90" />

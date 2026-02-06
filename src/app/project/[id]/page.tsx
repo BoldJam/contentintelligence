@@ -479,31 +479,47 @@ export default function ProjectPage() {
                 }}
             />
             {/* Header */}
-            <header className={`h-14 border-b flex items-center justify-between px-4 z-10 transition-colors ${isFundBuzz ? 'bg-white border-slate-100' : 'bg-slate-900 border-white/10'}`}>
-                <div className="flex items-center gap-4">
+            {/* Header */}
+            <header className={`h-16 border-b flex items-center justify-between px-6 z-10 transition-colors bg-[#0f172a] border-white/10`}>
+                <div className="flex items-center gap-6">
                     <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
                         <ProductSwitcher />
                     </Link>
-                    <div className="flex items-center gap-2">
-                        <span className={`text-gray-400 ${isFundBuzz ? 'text-slate-400' : ''}`}>/</span>
-                        <input
-                            type="text"
-                            value={projectTitle}
-                            onChange={(e) => setProjectTitle(e.target.value)}
-                            className={`bg-transparent border-none focus:ring-0 font-medium w-80 rounded px-2 py-1 transition-colors ${isFundBuzz ? 'text-slate-900 hover:bg-slate-100' : 'text-white hover:bg-white/5'}`}
-                        />
-                    </div>
+
+                    <div className="h-6 w-px bg-white/10" />
+
+                    <nav className="flex items-center gap-3">
+                        <Link href="/dashboard">
+                            <span className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+                                My projects
+                            </span>
+                        </Link>
+
+                        <span className="text-slate-600">/</span>
+
+                        <div className="flex items-center gap-2 group">
+                            <input
+                                type="text"
+                                value={projectTitle}
+                                onChange={(e) => setProjectTitle(e.target.value)}
+                                className="bg-transparent border-none focus:ring-0 font-medium text-white px-0 py-0 w-[300px] placeholder-gray-500 focus:bg-white/5 rounded transition-colors"
+                            />
+                            <Pencil className="w-3.5 h-3.5 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                    </nav>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <button className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${isFundBuzz ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200' : 'bg-white/5 hover:bg-white/10 text-white border border-white/5'}`}>
+                <div className="flex items-center gap-3">
+                    <button className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors bg-white/5 hover:bg-white/10 text-white border border-white/5">
                         <Share2 className="w-4 h-4" />
                         Share
                     </button>
-                    <button className={`p-2 rounded-full transition-colors ${isFundBuzz ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-white/5 text-gray-400'}`}>
+                    <button className="p-2 rounded-full transition-colors hover:bg-white/5 text-gray-400">
                         <Settings className="w-5 h-5" />
                     </button>
-                    <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-full ml-2" />
+                    <div className="w-9 h-9 bg-[#0f172a] rounded-full ml-2 border-2 border-orange-500 flex items-center justify-center text-xs text-orange-500 font-semibold" title="Huong Totten">
+                        HT
+                    </div>
                 </div>
             </header>
 
@@ -536,13 +552,11 @@ export default function ProjectPage() {
                             {/* Add Sources Icon - Moved Up */}
                             <button
                                 onClick={() => setIsAddSourcesOpen(true)}
-                                className={`p-2.5 rounded-lg transition-colors group relative ${isFundBuzz ? 'hover:bg-slate-100 text-slate-500 hover:text-slate-900' : 'hover:bg-white/10 text-gray-400 hover:text-white'}`}
+                                className={`p-2.5 rounded-lg transition-colors group relative ${isFundBuzz ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'}`}
                                 title="Add Sources"
                             >
                                 <Plus className="w-5 h-5" />
                             </button>
-
-                            <div className={`border-t ${isFundBuzz ? 'border-slate-200' : 'border-white/10'}`} />
 
                             {/* Divider for Sources */}
                             {importedPapers && importedPapers.length > 0 && (
@@ -557,7 +571,12 @@ export default function ProjectPage() {
                                     className={`p-2.5 rounded-lg transition-colors group relative ${isFundBuzz ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}
                                     title={paper.title}
                                 >
-                                    {paper.sourceType === 'text' ? (
+                                    {paper.sourceType === 'website' ? (
+                                        <div className="relative">
+                                            <Globe className={`w-5 h-5 ${isFundBuzz ? 'text-black' : 'text-white'}`} />
+                                            {!isFundBuzz && <Sparkles className="w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 stroke-[3] text-white fill-blue-950" />}
+                                        </div>
+                                    ) : paper.sourceType === 'text' ? (
                                         <div className="relative">
                                             <Globe className={`w-5 h-5 ${isFundBuzz ? 'text-black' : 'text-blue-400'}`} />
                                             {!isFundBuzz && <Sparkles className="w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 stroke-[3] text-blue-400 fill-blue-950" />}
@@ -591,10 +610,24 @@ export default function ProjectPage() {
                     ) : (
                         /* Full Panel Content */
                         <>
-                            <div className="p-4 flex items-center justify-between">
-                                {currentProduct !== 'fundbuzz' && <h2 className="font-semibold text-gray-200">Cite Sources</h2>}
-                                <button onClick={() => setLeftPanelCollapsed(true)} className={`p-1 hover:bg-white/5 rounded text-gray-400 ${currentProduct === 'fundbuzz' ? 'ml-auto' : ''}`}>
+                            <div className="p-4 flex items-center gap-2">
+                                <button
+                                    onClick={() => setLeftPanelCollapsed(true)}
+                                    className={`p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors border border-transparent hover:border-white/10`}
+                                    title="Collapse Panel"
+                                >
                                     <PanelLeftClose className="w-4 h-4" />
+                                </button>
+
+                                <button
+                                    onClick={() => setIsAddSourcesOpen(true)}
+                                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isFundBuzz
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm border border-blue-500/50'
+                                        }`}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Add Source</span>
                                 </button>
                             </div>
 
@@ -703,17 +736,6 @@ export default function ProjectPage() {
                                         </div>
                                     )}
 
-                                    <button
-                                        className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${isFundBuzz
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700 border border-transparent shadow-lg shadow-blue-500/20 font-semibold'
-                                            : 'border border-dashed border-white/20 hover:bg-white/5 text-gray-300'
-                                            }`}
-                                        onClick={() => setIsAddSourcesOpen(true)}
-                                    >
-                                        <Plus className="w-4 h-4 text-white" />
-                                        <span className="text-white">Add Sources</span>
-                                    </button>
-
                                     {isResearching && (
                                         <motion.div
                                             initial={{ opacity: 0, y: 10 }}
@@ -806,7 +828,7 @@ export default function ProjectPage() {
                                             <img src={theme.logo} alt={`${theme.displayName} Logo`} className="w-8 h-8 object-cover" />
                                         </div>
                                         <h3 className={`text-lg font-bold mb-1 ${isFundBuzz ? 'text-slate-900' : 'text-white'}`}>{theme.displayName}</h3>
-                                        <p className={`text-xs ${isFundBuzz ? 'text-slate-600' : 'text-gray-400'}`}>{currentProduct === 'fundbuzz' ? 'Marketing Research Workspace' : 'Continuous Learning Loop'}</p>
+                                        <p className={`text-xs text-center ${isFundBuzz ? 'text-slate-600' : 'text-gray-400'}`}>{currentProduct === 'fundbuzz' ? 'Compliance First, Agentic Content Workflow' : 'Continuous Learning Loop'}</p>
                                     </div>
                                 </div>
 
@@ -824,13 +846,13 @@ export default function ProjectPage() {
                                     </span>
                                 </div>
 
-                                {/* Right: Create Content / Review Material */}
+                                {/* Right: Generate Content */}
                                 <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
                                     <div className={`w-12 h-12 border rounded-full flex items-center justify-center transition-shadow ${isFundBuzz ? 'bg-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-slate-900 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.3)]'}`}>
-                                        {isFundBuzz ? <ClipboardCheck className="w-5 h-5 text-purple-600" /> : <FileText className="w-5 h-5 text-purple-400" />}
+                                        <Sparkles className={`w-5 h-5 ${isFundBuzz ? 'text-purple-600' : 'text-purple-400'}`} />
                                     </div>
                                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors ${isFundBuzz ? 'text-white bg-purple-600 border-purple-500 shadow-sm' : 'text-purple-300 bg-slate-900/80 border-purple-500/20'}`}>
-                                        {isFundBuzz ? 'Review Material' : 'Create Content'}
+                                        Generate Content
                                     </span>
                                 </div>
 
@@ -844,38 +866,15 @@ export default function ProjectPage() {
                                     </span>
                                 </div>
 
-                                {/* Left: Trend Analysis */}
+                                {/* Left: Post on Socials */}
                                 <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
                                     <div className={`w-12 h-12 border rounded-full flex items-center justify-center transition-shadow ${isFundBuzz ? 'bg-white border-green-500 shadow-lg shadow-green-500/20' : 'bg-slate-900 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.3)]'}`}>
-                                        <TrendingUp className={`w-5 h-5 ${isFundBuzz ? 'text-green-600' : 'text-green-400'}`} />
+                                        <Share2 className={`w-5 h-5 ${isFundBuzz ? 'text-green-600' : 'text-green-400'}`} />
                                     </div>
-                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors ${isFundBuzz ? 'text-white bg-green-600 border-green-500 shadow-sm' : 'text-green-300 bg-slate-900/80 border-green-500/20'}`}>Trend Analysis</span>
+                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors ${isFundBuzz ? 'text-white bg-green-600 border-green-500 shadow-sm' : 'text-green-300 bg-slate-900/80 border-green-500/20'}`}>Post on Socials</span>
                                 </div>
 
-                                {/* Connecting Arrows (SVG) */}
-                                <svg className={`absolute inset-0 w-full h-full pointer-events-none ${isFundBuzz ? 'opacity-90' : 'opacity-30'}`} viewBox="0 0 100 100">
-                                    <defs>
-                                        <marker
-                                            id="arrowhead"
-                                            markerWidth="8"
-                                            markerHeight="6"
-                                            refX="4"
-                                            refY="3"
-                                            orient="auto"
-                                            markerUnits="strokeWidth"
-                                        >
-                                            <polygon points="0 0, 8 3, 0 6" fill={isFundBuzz ? '#3b82f6' : '#fff'} />
-                                        </marker>
-                                    </defs>
-                                    {/* Top to Right */}
-                                    <path d="M 55 10 A 45 45 0 0 1 90 45" fill="none" stroke={isFundBuzz ? '#3b82f6' : '#fff'} strokeWidth={isFundBuzz ? '1.2' : '2'} markerEnd="url(#arrowhead)" />
-                                    {/* Right to Bottom */}
-                                    <path d="M 90 55 A 45 45 0 0 1 55 90" fill="none" stroke={isFundBuzz ? '#3b82f6' : '#fff'} strokeWidth={isFundBuzz ? '1.2' : '2'} markerEnd="url(#arrowhead)" />
-                                    {/* Bottom to Left */}
-                                    <path d="M 45 90 A 45 45 0 0 1 10 55" fill="none" stroke={isFundBuzz ? '#3b82f6' : '#fff'} strokeWidth={isFundBuzz ? '1.2' : '2'} markerEnd="url(#arrowhead)" />
-                                    {/* Left to Top */}
-                                    <path d="M 10 45 A 45 45 0 0 1 45 10" fill="none" stroke={isFundBuzz ? '#3b82f6' : '#fff'} strokeWidth={isFundBuzz ? '1.2' : '2'} markerEnd="url(#arrowhead)" />
-                                </svg>
+
                             </div>
                         )}
                     </div>
@@ -926,29 +925,6 @@ export default function ProjectPage() {
                                     <div className="relative">
                                         <Image className="w-5 h-5 text-orange-500" />
                                         <Sparkles className={`w-2 h-2 absolute -top-1 -right-1 stroke-[3] ${isFundBuzz ? 'text-orange-500 fill-white' : 'text-orange-400 fill-orange-950'}`} />
-                                    </div>
-                                </button>
-                                <button
-                                    onClick={() => setIsCustomizeAudioOpen(true)}
-                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors relative group"
-                                    title="Audio Studio"
-                                >
-                                    <div className="relative">
-                                        <Mic className="w-5 h-5 text-pink-500" />
-                                        <Sparkles className={`w-2 h-2 absolute -top-1 -right-1 stroke-[3] ${isFundBuzz ? 'text-pink-500 fill-white' : 'text-pink-400 fill-pink-950'}`} />
-                                    </div>
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setSelectedStudioTool('Video');
-                                        setIsStudioModalOpen(true);
-                                    }}
-                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors relative group"
-                                    title="Video Studio"
-                                >
-                                    <div className="relative">
-                                        <Video className="w-5 h-5 text-red-500" />
-                                        <Sparkles className={`w-2 h-2 absolute -top-1 -right-1 stroke-[3] ${isFundBuzz ? 'text-red-500 fill-white' : 'text-red-400 fill-red-950'}`} />
                                     </div>
                                 </button>
                             </div>
@@ -1015,7 +991,7 @@ export default function ProjectPage() {
                             <>
                                 {/* Expanded Content Header */}
                                 <div className={`p-4 flex items-center justify-between border-b ${isFundBuzz ? 'bg-white border-slate-100 shadow-sm' : ''}`}>
-                                    <h2 className={`font-semibold ${isFundBuzz ? 'text-slate-900' : 'text-gray-200'}`}>Studio</h2>
+                                    <h2 className={`font-semibold ${isFundBuzz ? 'text-slate-900' : 'text-gray-200'}`}>Content Studio</h2>
                                     <button onClick={() => setRightPanelOpen(false)} className={`p-1 rounded transition-colors ${isFundBuzz ? 'hover:bg-slate-100 text-slate-400' : 'hover:bg-white/5 text-gray-400'}`}>
                                         <PanelRightClose className="w-4 h-4" />
                                     </button>
@@ -1045,33 +1021,6 @@ export default function ProjectPage() {
                                                 <Sparkles className={`w-2 h-2 absolute -top-1 -right-1 stroke-[3] ${isFundBuzz ? 'text-orange-500 fill-slate-50 group-hover:fill-slate-100' : 'text-orange-400 fill-orange-950'}`} />
                                             </div>
                                             <span className={`text-xs font-medium ${isFundBuzz ? 'text-slate-700' : ''}`}>Image</span>
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            onClick={() => {
-                                                setIsCustomizeAudioOpen(true);
-                                            }}
-                                            className={`w-full flex flex-col items-center justify-center p-3 rounded-lg transition-colors gap-2 group ${isFundBuzz ? 'bg-slate-50 border border-slate-100 hover:bg-slate-100' : 'bg-white/5 hover:bg-white/10'}`}
-                                        >
-                                            <div className="relative">
-                                                <Mic className={`w-5 h-5 ${isFundBuzz ? 'text-pink-500' : 'text-pink-400'}`} />
-                                                <Sparkles className={`w-2 h-2 absolute -top-1 -right-1 stroke-[3] ${isFundBuzz ? 'text-pink-500 fill-slate-50 group-hover:fill-slate-100' : 'text-pink-400 fill-pink-950'}`} />
-                                            </div>
-                                            <span className={`text-xs font-medium ${isFundBuzz ? 'text-slate-700' : ''}`}>Audio</span>
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setSelectedStudioTool('Video');
-                                                setIsStudioModalOpen(true);
-                                            }}
-                                            className={`w-full flex flex-col items-center justify-center p-3 rounded-lg transition-colors gap-2 group ${isFundBuzz ? 'bg-slate-50 border border-slate-100 hover:bg-slate-100' : 'bg-white/5 hover:bg-white/10'}`}
-                                        >
-                                            <div className="relative">
-                                                <Video className={`w-5 h-5 ${isFundBuzz ? 'text-red-500' : 'text-red-400'}`} />
-                                                <Sparkles className={`w-2 h-2 absolute -top-1 -right-1 stroke-[3] ${isFundBuzz ? 'text-red-500 fill-slate-50 group-hover:fill-slate-100' : 'text-red-400 fill-red-950'}`} />
-                                            </div>
-                                            <span className={`text-xs font-medium ${isFundBuzz ? 'text-slate-700' : ''}`}>Video</span>
                                         </button>
                                     </div>
 
@@ -1104,7 +1053,6 @@ export default function ProjectPage() {
                                                 <Zap className="w-full h-full opacity-20" />
                                             </div>
                                             <p className="text-xs text-gray-500 mb-1">Studio output will be saved here.</p>
-                                            <p className="text-[10px] text-gray-600">After adding sources, click to add Audio Overview, study guide, mind map and more!</p>
                                         </div>
                                     )}
                                 </div>

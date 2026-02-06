@@ -36,7 +36,7 @@ const themes: Record<ProductType, ProductTheme> = {
   },
   fundbuzz: {
     name: 'fundbuzz',
-    displayName: 'Fund Buzz',
+    displayName: 'Bold AI',
     logo: '/fundbuzz-logo.svg',
     colors: {
       background: '#ffffff',

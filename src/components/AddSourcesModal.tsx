@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Search, Globe, Youtube, FileText, Copy, HardDrive, Link as LinkIcon } from 'lucide-react';
@@ -140,8 +141,9 @@ export default function AddSourcesModal({ isOpen, onClose, currentSourceCount, o
                 title: randomMock.title,
                 authors: randomMock.authors,
                 abstract: randomMock.content,
-                sourceType: 'text',
-                isMock: true
+                sourceType: 'website',
+                isMock: true,
+                aiSummary: `**Key Insights:**\n- **Market Shift:** The article highlights a significant shift towards ${randomMock.title.toLowerCase().includes('bond') ? 'fixed income' : 'sustainable'} strategies in 2026.\n- **Risk Factors:** Institutional investors are cautioned about volatility in emerging markets.\n- **Opportunity:** ${randomMock.title.includes('ESG') ? 'Green bonds' : 'Mid-cap equities'} are projected to outperform major indices.\n\n**Summary:**\nThis article from ${randomMock.authors} provides a comprehensive analysis of the current market landscape. It suggests that while traditional indicators remain relevant, the underlying drivers of growth have evolved. The author argues for a more dynamic approach to asset allocation, specifically targeting sectors that benefit from the new inflationary environment.`
             };
         } else if (type === 'youtube') {
             const randomMock = youtubeMocks[Math.floor(Math.random() * youtubeMocks.length)];
@@ -151,7 +153,8 @@ export default function AddSourcesModal({ isOpen, onClose, currentSourceCount, o
                 authors: randomMock.authors,
                 abstract: randomMock.content,
                 sourceType: 'video',
-                isMock: true
+                isMock: true,
+                aiSummary: `**Video Highlights:**\n- **00:02:15:** The speaker introduces the concept of 'AI-Centric Alpha' as a game changer.\n- **00:08:45:** Discussion on the hidden costs of passive investing in high-volatility regimes.\n- **00:14:30:** A compelling argument for Direct Indexing for tax efficiency.\n\n**Executive Summary:**\nIn this episode of "${randomMock.title}", the host dives deep into the structural changes facing the mutual fund industry. The key takeaway is that technology is no longer just an operation tool but a core investment driver. The discussion also touches on the democratization of sophisticated financial tools for retail investors.`
             };
         } else if (type === 'text') {
             mockSource = {
@@ -159,12 +162,26 @@ export default function AddSourcesModal({ isOpen, onClose, currentSourceCount, o
                 title: "Compliance Notes: Fund Disclosure Review",
                 authors: "System Export",
                 sourceType: 'text',
-                isMock: true
+                isMock: true,
+                aiSummary: "**Overview:**\ninternal compliance notes regarding the latest fund disclosure requirements.\n\n**Action Items:**\n- Review new SEC guidelines.\n- Update prospectus language.\n- Verify fee structure disclosure."
             };
         }
 
         onAddSource(mockSource);
         onClose();
+    };
+
+    const [linkUrl, setLinkUrl] = useState('');
+    const [sourceType, setSourceType] = useState<string>('website');
+
+    const handleExecute = () => {
+        // For the manual execute, we'll just pick a random mock of the selected type
+        // or create a generic one if it's 'document'/'audio' which we don't have deep mocks for
+        let type: 'website' | 'youtube' | 'text' = 'website';
+        if (sourceType === 'video') type = 'youtube';
+        if (sourceType === 'document' || sourceType === 'audio') type = 'text'; // Fallback for now
+
+        handleMockAdd(type);
     };
 
     return (
@@ -187,7 +204,7 @@ export default function AddSourcesModal({ isOpen, onClose, currentSourceCount, o
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none p-4"
                     >
-                        <div className={`w-full max-w-4xl rounded-3xl border shadow-2xl overflow-hidden pointer-events-auto flex flex-col max-h-[90vh] transition-colors ${isFundBuzz ? 'bg-white border-slate-200' : 'bg-slate-800 border-white/10'}`}>
+                        <div className={`w-full max-w-2xl rounded-3xl border shadow-2xl overflow-hidden pointer-events-auto flex flex-col transition-colors ${isFundBuzz ? 'bg-white border-slate-200' : 'bg-slate-800 border-white/10'}`}>
                             {/* Header */}
                             <div className={`p-6 flex items-center justify-between border-b ${isFundBuzz ? 'bg-white border-slate-100' : 'bg-slate-800 border-white/5'}`}>
                                 <div className="flex items-center gap-2">
@@ -201,111 +218,70 @@ export default function AddSourcesModal({ isOpen, onClose, currentSourceCount, o
                                 </button>
                             </div>
 
-                            <div className="p-8 overflow-y-auto">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h2 className={`text-2xl font-medium ${isFundBuzz ? 'text-slate-900' : 'text-white'}`}>Add sources</h2>
-                                    <button className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors text-sm font-medium ${isFundBuzz ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'}`}>
-                                        <Search className="w-4 h-4" />
-                                        Discover sources
-                                    </button>
-                                </div>
+                            {/* Main Content */}
+                            <div className="p-8 space-y-6">
+                                <div>
+                                    <h2 className={`text-xl font-medium mb-4 ${isFundBuzz ? 'text-slate-900' : 'text-white'}`}>Add Source</h2>
 
-                                <p className="text-gray-400 mb-8 max-w-2xl">
-                                    {isFundBuzz ? (
-                                        <>
-                                            Collect your research and marketing sources to explore insights and prepare for compliance review.
-                                            <br />
-                                            (Examples: investment reports, disclosure documents, market analysis, meeting transcripts, etc.)
-                                        </>
-                                    ) : (
-                                        <>
-                                            Sources let Akari v2 base its responses on the information that matters most to you.
-                                            <br />
-                                            (Examples: marketing plans, course reading, research notes, meeting transcripts, sales documents, etc.)
-                                        </>
-                                    )}
-                                </p>
-
-                                {/* Upload Area */}
-                                <div className={`border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center mb-8 transition-colors cursor-pointer group ${isFundBuzz ? 'border-slate-200 bg-slate-50 hover:bg-slate-100' : 'border-white/10 bg-white/5 hover:bg-white/[0.07]'}`}>
-                                    <div className={`w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                                        <Upload className={`w-6 h-6 text-primary`} />
-                                    </div>
-                                    <h3 className={`text-lg font-medium mb-2 ${isFundBuzz ? 'text-slate-900' : 'text-white'}`}>Upload sources</h3>
-                                    <p className={`mb-8 ${isFundBuzz ? 'text-slate-600' : 'text-gray-400'}`}>Drag and drop or <span className="text-primary font-medium">choose file</span> to upload</p>
-                                    <p className={`text-xs text-center max-w-xl ${isFundBuzz ? 'text-slate-500' : 'text-gray-500'}`}>
-                                        Supported file types: PDF, .txt, Markdown, Audio (e.g. mp3), .docx, .avif, .bmp, .gif, .ico, .jp2, .png, .webp, .tif, .tiff, .heic, .heif, .jpeg, .jpg, .jpe
-                                    </p>
-                                </div>
-
-                                {/* Source Options */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                                    {/* Google Workspace */}
-                                    <div className={`${isFundBuzz ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-white/5 border-white/10 text-white'} border rounded-xl p-4`}>
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <div className="w-5 h-5 bg-white text-black rounded flex items-center justify-center font-bold text-xs ring-1 ring-slate-200">G</div>
-                                            <span className="font-medium">Google Workspace</span>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className={`block text-sm font-medium mb-2 ${isFundBuzz ? 'text-slate-700' : 'text-gray-300'}`}>Link URL</label>
+                                            <div className="relative">
+                                                <LinkIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`} />
+                                                <input
+                                                    type="text"
+                                                    value={linkUrl}
+                                                    onChange={(e) => setLinkUrl(e.target.value)}
+                                                    placeholder="Paste link here..."
+                                                    className={`w-full pl-10 pr-4 py-2 rounded-lg border focus:ring-2 focus:outline-none ${isFundBuzz ? 'bg-white border-slate-200 focus:ring-blue-500/20 text-slate-900' : 'bg-white/5 border-white/10 focus:ring-blue-500/20 text-white placeholder-gray-500'}`}
+                                                />
+                                            </div>
                                         </div>
-                                        <button className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm border ${isFundBuzz ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 focus:ring-2 focus:ring-blue-500/20' : 'bg-slate-800 hover:bg-slate-900 border-white/5 text-white'}`}>
-                                            <HardDrive className="w-4 h-4 text-gray-400" />
-                                            Google Drive
-                                        </button>
-                                    </div>
 
-                                    {/* Link */}
-                                    <div className={`${isFundBuzz ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-white/5 border-white/10 text-white'} border rounded-xl p-4`}>
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <LinkIcon className="w-5 h-5 text-gray-400" />
-                                            <span className="font-medium">Link</span>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleMockAdd('website')}
-                                                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm border ${isFundBuzz ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-900 border-white/5 text-white'}`}
+                                        <div>
+                                            <label className={`block text-sm font-medium mb-2 ${isFundBuzz ? 'text-slate-700' : 'text-gray-300'}`}>Type</label>
+                                            <select
+                                                value={sourceType}
+                                                onChange={(e) => setSourceType(e.target.value)}
+                                                className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:outline-none appearance-none ${isFundBuzz ? 'bg-white border-slate-200 focus:ring-blue-500/20 text-slate-900' : 'bg-white/5 border-white/10 focus:ring-blue-500/20 text-white'}`}
                                             >
-                                                <Globe className="w-4 h-4 text-gray-400" />
-                                                Website
-                                            </button>
-                                            <button
-                                                onClick={() => handleMockAdd('youtube')}
-                                                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm border ${isFundBuzz ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-900 border-white/5 text-white'}`}
-                                            >
-                                                <Youtube className="w-4 h-4 text-red-500" />
-                                                YouTube
-                                            </button>
+                                                <option value="website">Website</option>
+                                                <option value="video">Video</option>
+                                                <option value="audio">Audio</option>
+                                                <option value="document">Document</option>
+                                            </select>
                                         </div>
-                                    </div>
-
-                                    {/* Paste Text */}
-                                    <div className={`${isFundBuzz ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-white/5 border-white/10 text-white'} border rounded-xl p-4`}>
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <FileText className="w-5 h-5 text-gray-400" />
-                                            <span className="font-medium">Paste text</span>
-                                        </div>
-                                        <button
-                                            onClick={() => handleMockAdd('text')}
-                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm border ${isFundBuzz ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-900 border-white/5 text-white'}`}
-                                        >
-                                            <Copy className="w-4 h-4 text-gray-400" />
-                                            Copied text
-                                        </button>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Footer */}
-                            <div className={`p-6 border-t flex items-center gap-4 ${isFundBuzz ? 'bg-slate-50 border-slate-200' : 'bg-slate-800 border-white/5'}`}>
-                                <div className={`flex items-center gap-2 ${isFundBuzz ? 'text-slate-500' : 'text-gray-400'}`}>
-                                    <Upload className="w-4 h-4" />
-                                    <span className="text-sm font-medium">Source limit</span>
+                            <div className={`p-6 border-t flex items-center justify-between ${isFundBuzz ? 'bg-slate-50 border-slate-200' : 'bg-slate-800 border-white/5'}`}>
+                                {/* Secondary Demo Buttons */}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleMockAdd('website')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${isFundBuzz ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'}`}
+                                    >
+                                        <Globe className="w-4 h-4" />
+                                        Website
+                                    </button>
+                                    <button
+                                        onClick={() => handleMockAdd('youtube')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${isFundBuzz ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'}`}
+                                    >
+                                        <Youtube className="w-4 h-4 text-red-500" />
+                                        Video
+                                    </button>
                                 </div>
-                                <div className={`flex-1 h-2 rounded-full overflow-hidden ${isFundBuzz ? 'bg-slate-200' : 'bg-white/10'}`}>
-                                    <div
-                                        className="h-full bg-primary rounded-full transition-all duration-500"
-                                        style={{ width: `${progressPercentage}%` }}
-                                    />
-                                </div>
-                                <span className={`text-sm ${isFundBuzz ? 'text-slate-600 font-medium' : 'text-gray-400'}`}>{currentSourceCount}/{limit}</span>
+
+                                {/* Primary CTA */}
+                                <button
+                                    onClick={handleExecute}
+                                    className={`px-6 py-2 rounded-full font-medium transition-colors shadow-lg shadow-blue-500/20 ${isFundBuzz ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                >
+                                    Execute
+                                </button>
                             </div>
                         </div>
                     </motion.div>

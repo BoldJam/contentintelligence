@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import React from 'react';
-import { ArrowLeft, ExternalLink, Star, Calendar, TrendingUp, Award, ShieldCheck, Lightbulb, FileText, Link2, Info, Zap, Video, Youtube, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, ExternalLink, Star, Calendar, TrendingUp, Award, ShieldCheck, Lightbulb, FileText, Link2, Info, Zap, Video, Youtube, Clock, ChevronDown, ChevronUp, Globe as Globe2, Sparkles } from 'lucide-react';
 import type { Paper } from '@/types/paper';
 import { useProduct } from '@/lib/productContext';
 
@@ -19,7 +19,8 @@ const iconMap: { [key: string]: any } = {
 };
 
 export default function PaperDetails({ paper, onBack }: PaperDetailsProps) {
-    const [authorsExpanded, setAuthorsExpanded] = React.useState(false);
+    const [authorsExpanded, setAuthorsExpanded] = useState(false);
+    const [summaryExpanded, setSummaryExpanded] = useState(false);
     const { currentProduct } = useProduct();
     const isFundBuzz = currentProduct === 'fundbuzz';
 
@@ -82,18 +83,72 @@ export default function PaperDetails({ paper, onBack }: PaperDetailsProps) {
                     )}
                 </div>
 
-                {/* Video specific header if applicable */}
-                {isVideo && (
-                    <div className={`rounded-xl p-4 border flex items-center gap-4 ${isFundBuzz ? 'bg-red-50 border-red-100' : 'bg-red-500/10 border-red-500/20'}`}>
-                        <div className={`p-3 rounded-full ${isFundBuzz ? 'bg-red-600 text-white' : 'bg-red-500 text-white'}`}>
-                            <Youtube className="w-6 h-6" />
+                {/* Type Badge */}
+                <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${paper.sourceType === 'video'
+                        ? (isFundBuzz ? 'bg-red-100 text-red-700' : 'bg-red-500/20 text-red-400')
+                        : (isFundBuzz ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/20 text-blue-400')
+                        }`}>
+                        {paper.sourceType === 'video' ? <Youtube className="w-3.5 h-3.5" /> : <Globe2 className="w-3.5 h-3.5" />}
+                        {paper.sourceType === 'video' ? 'Video' : 'Website'}
+                    </span>
+                </div>
+
+                {/* AI Summary Accordion */}
+                <div className={`rounded-xl overflow-hidden border transition-all ${isFundBuzz ? 'border-indigo-100 bg-indigo-50/50' : 'border-indigo-500/20 bg-indigo-500/10'}`}>
+                    <button
+                        onClick={() => setSummaryExpanded(!summaryExpanded)}
+                        className="w-full flex items-center justify-between p-4 text-left transition-colors hover:bg-black/5"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${isFundBuzz ? 'bg-indigo-100 text-indigo-600' : 'bg-indigo-500/20 text-indigo-400'}`}>
+                                <Sparkles className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h4 className={`font-semibold ${isFundBuzz ? 'text-indigo-900' : 'text-indigo-200'}`}>AI Summary</h4>
+                                <p className={`text-xs ${isFundBuzz ? 'text-indigo-600' : 'text-indigo-400'}`}>
+                                    {summaryExpanded ? 'Click to collapse' : 'Click to expand analysis'}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 className={`font-semibold ${isFundBuzz ? 'text-red-900' : 'text-red-400'}`}>Video Content</h4>
-                            <p className={`text-xs ${isFundBuzz ? 'text-red-700' : 'text-red-300'}`}>Transcript and analysis available below</p>
+                        {summaryExpanded ? (
+                            <ChevronUp className={`w-5 h-5 ${isFundBuzz ? 'text-indigo-400' : 'text-indigo-400'}`} />
+                        ) : (
+                            <ChevronDown className={`w-5 h-5 ${isFundBuzz ? 'text-indigo-400' : 'text-indigo-400'}`} />
+                        )}
+                    </button>
+
+                    {summaryExpanded && (
+                        <div className={`p-5 pt-0 border-t ${isFundBuzz ? 'border-indigo-100' : 'border-indigo-500/20'}`}>
+                            <div className={`mt-4 prose prose-sm max-w-none ${isFundBuzz ? 'text-slate-700 prose-headings:text-indigo-900 prose-strong:text-indigo-800' : 'text-gray-300 prose-headings:text-indigo-200 prose-strong:text-indigo-300'}`}>
+                                {paper.aiSummary ? (
+                                    paper.aiSummary.split('\n').map((line, i) => (
+                                        <p key={i} className="mb-2 last:mb-0 leading-relaxed">
+                                            {line.startsWith('-') ? (
+                                                <span className="flex gap-2">
+                                                    <span className="shrink-0">•</span>
+                                                    <span>
+                                                        {line.substring(1).split('**').map((part, j) =>
+                                                            j % 2 === 1 ? <strong key={j} className="font-semibold">{part}</strong> : part
+                                                        )}
+                                                    </span>
+                                                </span>
+                                            ) : (
+                                                line.split('**').map((part, j) =>
+                                                    j % 2 === 1 ? <strong key={j} className="font-semibold">{part}</strong> : part
+                                                )
+                                            )}
+                                        </p>
+                                    ))
+                                ) : (
+                                    <p className="italic opacity-70">AI summary generating...</p>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
+
+
 
                 {/* 1. Abstract / Transcription Section */}
                 {paper.abstract && (
@@ -102,8 +157,8 @@ export default function PaperDetails({ paper, onBack }: PaperDetailsProps) {
                             {isVideo ? 'Transcript' : (isFundBuzz ? 'Source Overview' : 'Abstract')}
                         </h4>
                         <div className={`p-5 rounded-2xl border text-base leading-relaxed ${isFundBuzz
-                                ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-sm'
-                                : 'bg-white/5 border-white/10 text-gray-200'
+                            ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-sm'
+                            : 'bg-white/5 border-white/10 text-gray-200'
                             }`}>
                             {isVideo ? (
                                 <div className="space-y-4 font-mono text-sm">
@@ -211,8 +266,8 @@ export default function PaperDetails({ paper, onBack }: PaperDetailsProps) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs font-medium transition-colors ${isFundBuzz
-                                        ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-                                        : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10'
+                                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                    : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10'
                                     }`}
                             >
                                 <Link2 className="w-3 h-3" />

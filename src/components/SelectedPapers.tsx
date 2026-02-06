@@ -38,6 +38,13 @@ export default function SelectedPapers({ papers, onPaperClick, onRemove }: Selec
         }
 
         switch (paper.sourceType) {
+            case 'website':
+                return (
+                    <div className="relative">
+                        <Globe className={`w-5 h-5 ${isFundBuzz ? 'text-slate-900' : 'text-white'}`} />
+                        {!isFundBuzz && <Sparkles className="w-2.5 h-2.5 text-white absolute -bottom-0.5 -right-0.5 fill-slate-900 stroke-[3]" />}
+                    </div>
+                );
             case 'text':
                 return (
                     <div className="relative">

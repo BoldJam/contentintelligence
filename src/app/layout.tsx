@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fund Buzz",
+  title: "Bold AI - Compliance First, Agentic Content Workflow for Asset Managers",
   description: "Science-backed content creation",
   icons: {
-    icon: '/favicon.png',
+    icon: '/favicon.svg',
   },
 };
 

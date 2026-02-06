@@ -16,8 +16,9 @@ export interface Paper {
     externalIds?: { DOI?: string; PubMed?: string; ArXiv?: string };
     publicationDate?: string;
     journal?: { name?: string; volume?: string; pages?: string };
-    sourceType?: 'paper' | 'text' | 'audio' | 'image' | 'note' | 'video';
+    sourceType?: 'paper' | 'text' | 'audio' | 'image' | 'note' | 'video' | 'website';
     isMock?: boolean;
+    aiSummary?: string;
 }
 
 export interface Badge {
