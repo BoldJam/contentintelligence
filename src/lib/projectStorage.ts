@@ -1,5 +1,6 @@
 import type { Project, ProjectMetadata } from '@/types/project';
 import type { Source } from '@/types/source';
+import type { Chat, ChatWithMessages, ChatMessage } from '@/types/chat';
 
 // Save a project (update)
 export async function saveProject(project: Project): Promise<void> {
@@ -82,4 +83,77 @@ export async function updateContent(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contentId, ...updates }),
     });
+}
+
+// --- Chat API ---
+
+// Create a new chat for a project
+export async function createChat(projectId: string): Promise<Chat> {
+    const res = await fetch(`/api/projects/${projectId}/chats`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.details || err.error || 'Failed to create chat');
+    }
+    return res.json();
+}
+
+// List all chats for a project
+export async function listChats(projectId: string): Promise<Chat[]> {
+    const res = await fetch(`/api/projects/${projectId}/chats`);
+    if (!res.ok) return [];
+    return res.json();
+}
+
+// Get a chat with all messages
+export async function getChat(projectId: string, chatId: string): Promise<ChatWithMessages> {
+    const res = await fetch(`/api/projects/${projectId}/chats/${chatId}`);
+    if (!res.ok) throw new Error('Failed to get chat');
+    return res.json();
+}
+
+// Delete a chat
+export async function deleteChat(projectId: string, chatId: string): Promise<void> {
+    await fetch(`/api/projects/${projectId}/chats/${chatId}`, { method: 'DELETE' });
+}
+
+// Send a chat message and get AI response
+export async function sendChatMessage(
+    projectId: string,
+    chatId: string,
+    message: string,
+    sourceContext?: string
+): Promise<ChatMessage> {
+    const res = await fetch(`/api/projects/${projectId}/chats/${chatId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, sourceContext }),
+    });
+    if (!res.ok) throw new Error('Failed to send message');
+    return res.json();
+}
+
+// Get suggested questions for a source
+export async function getSuggestedQuestions(projectId: string, sourceId: string): Promise<string[]> {
+    const res = await fetch(`/api/projects/${projectId}/sources/${sourceId}/questions`);
+    if (!res.ok) return [];
+    return res.json();
+}
+
+// Get trending insights with grounding
+export async function getTrendingInsights(
+    projectId: string,
+    chatId: string,
+    summary: string
+): Promise<ChatMessage> {
+    const res = await fetch(`/api/projects/${projectId}/chats/${chatId}/trending`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary }),
+    });
+    if (!res.ok) throw new Error('Failed to get trending insights');
+    return res.json();
 }

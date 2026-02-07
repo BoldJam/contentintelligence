@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import {
     Share2, Settings, MoreVertical, Plus,
     Zap, Mic, Video, FileText,
-    PanelLeftClose, PanelRightClose, Sparkles, Users, Pencil, Image, ShieldCheck, Youtube
+    PanelLeftClose, PanelRightClose, Sparkles, Users, Pencil, Image, ShieldCheck, Youtube,
+    MessageSquarePlus, History, Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -20,9 +21,10 @@ import TextContentDetails from '@/components/TextContentDetails';
 import LanguageSelector from '@/components/LanguageSelector';
 import SelectedSources from '@/components/SelectedSources';
 import SourceDetails from '@/components/SourceDetails';
-import type { Source, SummaryData } from '@/types/source';
+import type { Source } from '@/types/source';
+import type { Chat, ChatMessage, ChatWithMessages } from '@/types/chat';
 import ChatInterface from '@/components/ChatInterface';
-import { loadProject, saveProject, createNewProject, addSource as addSourceAPI, checkSourceStatus } from '@/lib/projectStorage';
+import { loadProject, saveProject, createNewProject, addSource as addSourceAPI, checkSourceStatus, listChats, getChat, createChat, deleteChat } from '@/lib/projectStorage';
 import type { Project, GeneratedContent } from '@/types/project';
 import ProductSwitcher from '@/components/ProductSwitcher';
 
@@ -49,51 +51,18 @@ export default function ProjectPage() {
     const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
     const [generatedContent, setGeneratedContent] = useState<GeneratedContent[]>([]);
     const [selectedContent, setSelectedContent] = useState<GeneratedContent | null>(null);
+    const [currentChat, setCurrentChat] = useState<ChatWithMessages | null>(null);
+    const [chatList, setChatList] = useState<Chat[]>([]);
+    const [showChatHistory, setShowChatHistory] = useState(false);
     const isCreatingProject = useRef(false);
     const pollingTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
-    // Derive summaryData from sources (no separate state needed)
-    const summaryData: SummaryData | null = (() => {
-        if (!sources || sources.length === 0) return null;
-
-        const completedSources = sources.filter(s => s.summary);
-        const processingSources = sources.filter(s => s.processingStatus === 'processing');
-
-        if (completedSources.length === 0 && processingSources.length > 0) {
-            return {
-                title: 'Processing Sources...',
-                summary: `${processingSources.length} source(s) are being processed by AI. Summaries will appear here once complete.`,
-                questions: [],
-            };
+    // Load chat list when project loads
+    useEffect(() => {
+        if (projectId && projectId !== 'new') {
+            listChats(projectId).then(setChatList);
         }
-
-        if (completedSources.length === 0) {
-            return {
-                title: sources.length > 1 ? `${sources.length} Sources Added` : sources[0].title,
-                summary: 'Source summaries are not yet available.',
-                questions: [],
-            };
-        }
-
-        // Build summary from individual source summaries
-        const summary = completedSources
-            .map(s => `**${s.title}**\n${s.summary}`)
-            .join('\n\n---\n\n');
-
-        return {
-            title: completedSources.length > 1
-                ? `Synthesis: ${completedSources.length} Sources Analyzed`
-                : `Intelligence Report: ${completedSources[0].title}`,
-            summary,
-            questions: [
-                `How do the findings in "${completedSources[0]?.title}" impact our strategy?`,
-                'What are the key compliance considerations?',
-                'What marketing hooks can we extract from this research?',
-            ],
-        };
-    })();
-
-    const isGeneratingSummary = sources?.some(s => s.processingStatus === 'processing') ?? false;
+    }, [projectId]);
 
     // Poll for source processing status
     const startPolling = useCallback((sourceId: string) => {
@@ -218,6 +187,42 @@ export default function ProjectPage() {
         setLeftPanelOpen(true);
         setSelectedSource(source);
     };
+
+    const handleNewChat = useCallback(async () => {
+        setCurrentChat(null);
+        setShowChatHistory(false);
+    }, []);
+
+    const handleLoadChat = useCallback(async (chatId: string) => {
+        try {
+            const chat = await getChat(projectId, chatId);
+            setCurrentChat(chat);
+            setShowChatHistory(false);
+        } catch (error) {
+            console.error('Failed to load chat:', error);
+        }
+    }, [projectId]);
+
+    const handleDeleteChat = useCallback(async (chatId: string) => {
+        try {
+            await deleteChat(projectId, chatId);
+            setChatList(prev => prev.filter(c => c.id !== chatId));
+            if (currentChat?.id === chatId) {
+                setCurrentChat(null);
+            }
+        } catch (error) {
+            console.error('Failed to delete chat:', error);
+        }
+    }, [projectId, currentChat?.id]);
+
+    const handleChatCreated = useCallback((chat: ChatWithMessages) => {
+        setCurrentChat(chat);
+        setChatList(prev => [chat, ...prev]);
+    }, []);
+
+    const handleMessagesUpdated = useCallback((messages: ChatMessage[]) => {
+        setCurrentChat(prev => prev ? { ...prev, messages } : null);
+    }, []);
 
     const handleSaveToNote = (content: string) => {
         const newItem: GeneratedContent = {
@@ -565,31 +570,80 @@ export default function ProjectPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="flex-1 flex flex-col min-w-0 min-h-0 relative"
+                    className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative"
                 >
                     <div className={`p-4 border-b flex items-center justify-between shrink-0 ${isFundBuzz ? 'bg-white border-slate-200 shadow-sm z-10' : 'bg-slate-900 border-white/5'}`}>
                         <div className="flex items-center gap-2">
                             <span className={`font-medium ${isFundBuzz ? 'text-slate-900' : 'text-gray-200'}`}>Research Assistant</span>
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${isFundBuzz ? 'border-slate-300 text-slate-400' : 'border-white/20 text-gray-400'}`}>i</div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className={`p-1.5 rounded-lg transition-colors ${isFundBuzz ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-white/5 text-gray-400'}`}>
-                                <Settings className="w-4 h-4" />
-                            </button>
-                            <button className={`p-1.5 rounded-lg transition-colors ${isFundBuzz ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-white/5 text-gray-400'}`}>
-                                <MoreVertical className="w-4 h-4" />
-                            </button>
+                            {selectedSource && (
+                                <>
+                                    <button
+                                        onClick={handleNewChat}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isFundBuzz
+                                            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                                            : 'bg-white/10 hover:bg-white/20 text-white'
+                                            }`}
+                                        title="New Chat"
+                                    >
+                                        <MessageSquarePlus className="w-4 h-4" />
+                                        <span className="hidden md:inline">New Chat</span>
+                                    </button>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowChatHistory(!showChatHistory)}
+                                            className={`p-1.5 rounded-lg transition-colors ${isFundBuzz ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-white/5 text-gray-400'}`}
+                                            title="Chat History"
+                                        >
+                                            <History className="w-4 h-4" />
+                                        </button>
+                                {showChatHistory && chatList.length > 0 && (
+                                    <div className={`absolute right-0 top-full mt-2 w-72 rounded-xl border shadow-xl z-50 max-h-80 overflow-y-auto scrollbar-hide ${isFundBuzz ? 'bg-white border-slate-200' : 'bg-slate-800 border-white/10'}`}>
+                                        {chatList.map(chat => (
+                                            <div
+                                                key={chat.id}
+                                                className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${currentChat?.id === chat.id
+                                                    ? (isFundBuzz ? 'bg-blue-50' : 'bg-white/10')
+                                                    : (isFundBuzz ? 'hover:bg-slate-50' : 'hover:bg-white/5')
+                                                    }`}
+                                            >
+                                                <div
+                                                    className="flex-1 min-w-0"
+                                                    onClick={() => handleLoadChat(chat.id)}
+                                                >
+                                                    <p className={`text-sm font-medium truncate ${isFundBuzz ? 'text-slate-900' : 'text-white'}`}>
+                                                        {chat.title}
+                                                    </p>
+                                                    <p className={`text-xs ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`}>
+                                                        {new Date(chat.updatedAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat.id); }}
+                                                    className={`p-1 rounded transition-colors flex-shrink-0 ml-2 ${isFundBuzz ? 'hover:bg-red-50 text-slate-400 hover:text-red-500' : 'hover:bg-red-500/20 text-gray-500 hover:text-red-400'}`}
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
-                    <div className="flex-1 relative min-h-0 overflow-hidden flex flex-col items-center justify-center p-8">
-                        {sources && summaryData ? (
+                    <div className={`flex-1 relative min-h-0 overflow-hidden flex flex-col ${sources && sources.length > 0 ? '' : 'items-center justify-center p-8'}`}>
+                        {sources && sources.length > 0 ? (
                             <ChatInterface
-                                selectedSourceCount={sources.length}
-                                summaryData={summaryData}
+                                projectId={projectId}
+                                selectedSource={selectedSource}
                                 onSaveToNote={handleSaveToNote}
-                                isLoading={isGeneratingSummary}
-                                sourceTitles={sources.map(s => s.title)}
+                                currentChat={currentChat}
+                                onChatCreated={handleChatCreated}
+                                onMessagesUpdated={handleMessagesUpdated}
                             />
                         ) : (
                             <div className="relative w-full max-w-md aspect-square flex items-center justify-center">
