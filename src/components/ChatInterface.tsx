@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, ThumbsUp, ThumbsDown, Bookmark, ArrowRight, Sparkles, LayoutTemplate, TrendingUp, User, Bot } from 'lucide-react';
-import type { SummaryData } from '@/types/paper';
+import type { SummaryData } from '@/types/source';
 import { useProduct } from '@/lib/productContext';
 import ReactMarkdown from 'react-markdown';
 
 interface ChatInterfaceProps {
-    selectedPaperCount: number;
+    selectedSourceCount: number;
     summaryData: SummaryData;
     onSaveToNote: (content: string) => void;
     isLoading?: boolean;
@@ -19,7 +19,7 @@ interface Message {
     content: string;
 }
 
-export default function ChatInterface({ selectedPaperCount, summaryData, onSaveToNote, isLoading = false, sourceTitles = [] }: ChatInterfaceProps) {
+export default function ChatInterface({ selectedSourceCount, summaryData, onSaveToNote, isLoading = false, sourceTitles = [] }: ChatInterfaceProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -156,7 +156,7 @@ ${formattedNews.join('\n')}
                 }
             }
             else {
-                responseContent = `I've analyzed the ${selectedPaperCount} source(s) and found that your query regarding "${text}" aligns with the key trends in 2026 investment strategies. How else can I help narrow this down for your marketing copy? 💡`;
+                responseContent = `I've analyzed the ${selectedSourceCount} source(s) and found that your query regarding "${text}" aligns with the key trends in 2026 investment strategies. How else can I help narrow this down for your marketing copy? 💡`;
             }
 
             const aiMsg: Message = {
@@ -204,7 +204,7 @@ ${formattedNews.join('\n')}
                                 </h1>
 
                                 <p className={`text-sm font-medium ${isFundBuzz ? 'text-slate-500' : 'text-gray-400'}`}>
-                                    {selectedPaperCount} {selectedPaperCount === 1 ? 'source' : 'sources'}
+                                    {selectedSourceCount} {selectedSourceCount === 1 ? 'source' : 'sources'}
                                 </p>
                             </>
                         )}
@@ -405,7 +405,7 @@ ${formattedNews.join('\n')}
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-3">
                             <span className={`text-xs font-medium ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`}>
-                                {selectedPaperCount} {selectedPaperCount === 1 ? 'source' : 'sources'}
+                                {selectedSourceCount} {selectedSourceCount === 1 ? 'source' : 'sources'}
                             </span>
                             <button
                                 onClick={() => handleSend(inputValue)}

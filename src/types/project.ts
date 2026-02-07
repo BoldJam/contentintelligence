@@ -1,4 +1,4 @@
-import type { Paper, SummaryData } from './paper';
+import type { Source, SummaryData } from './source';
 
 export interface GeneratedContent {
     id: string;
@@ -18,7 +18,7 @@ export interface Project {
     createdAt: number;
     updatedAt: number;
     searchQuery: string;
-    importedPapers: Paper[];
+    sources: Source[];
     summaryData: SummaryData | null;
     generatedContent: GeneratedContent[];
 }
@@ -27,5 +27,5 @@ export interface ProjectMetadata {
     id: string;
     title: string;
     updatedAt: number;
-    paperCount: number;
+    sourceCount: number;
 }
