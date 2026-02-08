@@ -5,7 +5,7 @@ import {
     Share2, Settings, MoreVertical, Plus,
     Zap, Mic, Video, FileText,
     PanelLeftClose, PanelRightClose, Sparkles, Users, Pencil, Image, ShieldCheck, Youtube,
-    MessageSquarePlus, History, Trash2
+    MessageSquarePlus, History, Trash2, AlertCircle, X
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -14,7 +14,6 @@ import { useProduct } from '@/lib/productContext';
 import AddSourcesModal from '@/components/AddSourcesModal';
 import StudioModal from '@/components/StudioModal';
 import CustomizeTextModal from '@/components/CustomizeTextModal';
-import CustomizeAudioModal from '@/components/CustomizeAudioModal';
 import CustomizeImageModal from '@/components/CustomizeImageModal';
 import ContentGenerated from '@/components/ContentGenerated';
 import TextContentDetails from '@/components/TextContentDetails';
@@ -24,7 +23,7 @@ import SourceDetails from '@/components/SourceDetails';
 import type { Source } from '@/types/source';
 import type { Chat, ChatMessage, ChatWithMessages } from '@/types/chat';
 import ChatInterface from '@/components/ChatInterface';
-import { loadProject, saveProject, createNewProject, addSource as addSourceAPI, checkSourceStatus, listChats, getChat, createChat, deleteChat } from '@/lib/projectStorage';
+import { loadProject, saveProject, createNewProject, addSource as addSourceAPI, checkSourceStatus, createContent, listContent, deleteContent, checkContentStatus, listChats, getChat, createChat, deleteChat } from '@/lib/projectStorage';
 import type { Project, GeneratedContent } from '@/types/project';
 import ProductSwitcher from '@/components/ProductSwitcher';
 
@@ -42,7 +41,6 @@ export default function ProjectPage() {
     const [isAddSourcesOpen, setIsAddSourcesOpen] = useState(false);
     const [isStudioModalOpen, setIsStudioModalOpen] = useState(false);
     const [isCustomizeTextOpen, setIsCustomizeTextOpen] = useState(false);
-    const [isCustomizeAudioOpen, setIsCustomizeAudioOpen] = useState(false);
     const [isCustomizeImageOpen, setIsCustomizeImageOpen] = useState(false);
     const [selectedStudioTool, setSelectedStudioTool] = useState<string>('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -54,8 +52,17 @@ export default function ProjectPage() {
     const [currentChat, setCurrentChat] = useState<ChatWithMessages | null>(null);
     const [chatList, setChatList] = useState<Chat[]>([]);
     const [showChatHistory, setShowChatHistory] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const isCreatingProject = useRef(false);
     const pollingTimers = useRef<Record<string, NodeJS.Timeout>>({});
+    const contentPollingTimers = useRef<Record<string, NodeJS.Timeout>>({});
+
+    // Auto-dismiss error toast
+    useEffect(() => {
+        if (!errorMessage) return;
+        const timer = setTimeout(() => setErrorMessage(null), 5000);
+        return () => clearTimeout(timer);
+    }, [errorMessage]);
 
     // Load chat list when project loads
     useEffect(() => {
@@ -91,11 +98,49 @@ export default function ProjectPage() {
         }, 3000);
     }, [projectId]);
 
+    // Poll for content processing status
+    const startContentPolling = useCallback((contentId: string) => {
+        if (contentPollingTimers.current[contentId]) {
+            clearInterval(contentPollingTimers.current[contentId]);
+        }
+
+        contentPollingTimers.current[contentId] = setInterval(async () => {
+            try {
+                const updated = await checkContentStatus(projectId, contentId);
+                if (!updated.isLoading) {
+                    clearInterval(contentPollingTimers.current[contentId]);
+                    delete contentPollingTimers.current[contentId];
+                }
+
+                if (updated.processingStatus === 'failed') {
+                    setErrorMessage('Content generation failed. Please try again.');
+                    setGeneratedContent(prev => prev.filter(c => c.id !== contentId));
+                    setSelectedContent(prev => prev?.id === contentId ? null : prev);
+                    return;
+                }
+
+                setGeneratedContent(prev =>
+                    prev.map(c => c.id === contentId ? updated : c)
+                );
+                // Keep selectedContent in sync so detail view updates
+                setSelectedContent(prev =>
+                    prev?.id === contentId ? updated : prev
+                );
+            } catch (error) {
+                console.error('Content polling error:', error);
+                clearInterval(contentPollingTimers.current[contentId]);
+                delete contentPollingTimers.current[contentId];
+            }
+        }, 3000);
+    }, [projectId]);
+
     // Clean up polling on unmount
     useEffect(() => {
-        const timers = pollingTimers.current;
+        const sourceTimers = pollingTimers.current;
+        const contentTimers = contentPollingTimers.current;
         return () => {
-            Object.values(timers).forEach(clearInterval);
+            Object.values(sourceTimers).forEach(clearInterval);
+            Object.values(contentTimers).forEach(clearInterval);
         };
     }, []);
 
@@ -114,7 +159,6 @@ export default function ProjectPage() {
                     setProjectTitle(loaded.title);
                     setSearchQuery(loaded.searchQuery);
                     setSources(loaded.sources.length > 0 ? loaded.sources : null);
-                    setGeneratedContent(loaded.generatedContent || []);
 
                     // Resume polling for any sources still processing
                     loaded.sources
@@ -129,7 +173,7 @@ export default function ProjectPage() {
     }, [projectId, router, startPolling]);
 
     // Auto-save project when data changes (debounced)
-    // Sources are managed via their own API — do NOT include them here
+    // Sources and content are managed via their own APIs
     useEffect(() => {
         if (!project || projectId === 'new') return;
 
@@ -140,13 +184,13 @@ export default function ProjectPage() {
                 searchQuery,
                 sources: [],
                 summaryData: null,
-                generatedContent,
+                generatedContent: [],
             };
             saveProject(updatedProject);
         }, 500);
 
         return () => clearTimeout(timeout);
-    }, [project, projectId, projectTitle, searchQuery, generatedContent]);
+    }, [project, projectId, projectTitle, searchQuery]);
 
     // Add a source via the API and start polling
     const handleAddSource = async (input: { url: string; type: string; title: string }) => {
@@ -224,16 +268,17 @@ export default function ProjectPage() {
         setCurrentChat(prev => prev ? { ...prev, messages } : null);
     }, []);
 
-    const handleSaveToNote = (content: string) => {
-        const newItem: GeneratedContent = {
-            id: Date.now().toString(),
-            title: 'Research Note',
-            type: 'note',
-            content: content,
-            createdAt: new Date(),
-            isLoading: false
-        };
-        setGeneratedContent(prev => [newItem, ...prev]);
+    const handleSaveToNote = async (content: string) => {
+        try {
+            const newContent = await createContent(projectId, {
+                action: 'note',
+                content,
+                sourceId: selectedSource?.id,
+            });
+            setGeneratedContent(prev => [newContent, ...prev]);
+        } catch (error) {
+            console.error('Failed to save note:', error);
+        }
     };
 
     const handleAddToSources = (content: GeneratedContent) => {
@@ -251,40 +296,13 @@ export default function ProjectPage() {
         setSources(prev => [newSource, ...(prev || [])]);
     };
 
-    const generateStudioText = (srcList: Source[], format: string, layout: string[], focus: string, boosts: string[]) => {
-        const mainTopic = srcList[0]?.title || 'market trends';
-
-        let content = '';
-
-        layout.forEach((slot, index) => {
-            const cleanSlot = slot.replace(/\[.*?\]/g, '').replace(/Slide \d+:/g, '').trim();
-
-            if (format === 'Thread Pack') {
-                if (index === 0) content += `🧵 NEW RESEARCH: Why the consensus on ${mainTopic} is shifting. ${focus ? `Focusing on ${focus}.` : ''}\n\n`;
-                else if (index === 1) content += `1/ The numbers don't lie. Data from ${srcList.length} sources shows a critical pivot. "Institutional resilience is no longer optional."\n\n`;
-                else if (index === 2) content += `2/ Our internal analysis identifies a 12% shift in retail interest. This isn't just a trend; it's a structural realignment. ${boosts.includes('Summarize the core points.') ? 'Synthesizing the core physics here.' : ''}\n\n`;
-                else content += `3/ Bottom line: Align your messaging with performance data now to capture this 2026 momentum. 📉\n\n`;
-            } else if (format === 'Carousel Copy') {
-                content += `SLIDE ${index + 1}: ${cleanSlot}\n`;
-                if (index === 0) content += `> Headline: The Future of ${mainTopic}\n\n`;
-                else if (index === 1) content += `> Context: Most investors believe the 2026 cycle is fixed. Our library proves otherwise.\n\n`;
-                else if (index === 2) content += `> The Data: Correlated benchmarks suggest institutional alpha is migrating to specialized sectors.\n\n`;
-                else content += `> Action: Download our full intelligence report via the link in bio. 🚀\n\n`;
-            } else if (format === 'Fact Card') {
-                content += `${cleanSlot.toUpperCase()}\n`;
-                if (index === 0) content += `📊 STAT: 12% increase in retail interest for ${mainTopic} sectors.\n\n`;
-                else if (index === 1) content += `🔍 INSIGHT: "Institutional resilience is the lead indicator for 2026 staying power."\n\n`;
-                else content += `✅ SOURCE: Cross-correlated transcript analysis from your project library.\n\n`;
-            } else {
-                content += `- ${cleanSlot}: Analysis of ${mainTopic} suggests unified growth in ${focus || 'current sectors'}.\n`;
-            }
-        });
-
-        if (boosts.includes('Provide practical takeaways.')) {
-            content += `\n💡 PRACTICAL TAKEAWAY: Reposition marketing hooks toward "Algorithm-Driven Active Management" to align with these findings.`;
+    const handleDeleteContent = async (id: string) => {
+        try {
+            await deleteContent(projectId, id);
+            setGeneratedContent(prev => prev.filter(item => item.id !== id));
+        } catch (error) {
+            console.error('Failed to delete content:', error);
         }
-
-        return content.trim();
     };
 
     const handleUpdateContentStatus = (id: string, status: GeneratedContent['complianceStatus']) => {
@@ -303,6 +321,20 @@ export default function ProjectPage() {
         );
     };
 
+    // Load content when selectedSource changes
+    useEffect(() => {
+        if (!project || projectId === 'new') return;
+        if (!selectedSource) {
+            setGeneratedContent([]);
+            return;
+        }
+        listContent(projectId, selectedSource.id).then(items => {
+            setGeneratedContent(items);
+            // Resume polling for any content still processing
+            items.filter(c => c.isLoading).forEach(c => startContentPolling(c.id));
+        });
+    }, [project, projectId, selectedSource, startContentPolling]);
+
     // Calculate left panel width based on state
     const leftPanelWidth = leftPanelCollapsed
         ? 64
@@ -310,6 +342,24 @@ export default function ProjectPage() {
 
     return (
         <div className="h-screen bg-slate-900 text-white flex flex-col overflow-hidden">
+            {/* Error Toast */}
+            {errorMessage && (
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-3 rounded-lg bg-red-600 text-white shadow-lg"
+                >
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <span className="text-sm font-medium">{errorMessage}</span>
+                    <button
+                        onClick={() => setErrorMessage(null)}
+                        className="p-0.5 rounded hover:bg-red-500 transition-colors"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </motion.div>
+            )}
             {/* Add Sources Modal */}
             <AddSourcesModal
                 isOpen={isAddSourcesOpen}
@@ -327,81 +377,65 @@ export default function ProjectPage() {
             <CustomizeTextModal
                 isOpen={isCustomizeTextOpen}
                 onClose={() => setIsCustomizeTextOpen(false)}
-                onGenerate={(title, format, layout, focus, boosts) => {
-                    const tempTitle = title || `${sources?.[0]?.title.substring(0, 35)}...`;
-                    const newItem: GeneratedContent = {
-                        id: Date.now().toString(),
-                        title: tempTitle,
-                        type: 'text',
-                        format: format,
-                        createdAt: new Date(),
-                        isLoading: true,
-                        complianceStatus: 'Draft'
-                    };
-                    setGeneratedContent(prev => [newItem, ...prev]);
-
-                    setTimeout(() => {
-                        const generatedText = generateStudioText(sources || [], format, layout, focus, boosts);
-                        const conciseTitle = focus ? (focus.charAt(0).toUpperCase() + focus.slice(1).substring(0, 35)) : (sources?.[0]?.title.substring(0, 35) || 'Market Analysis');
-
-                        setGeneratedContent(prev =>
-                            prev.map(item =>
-                                item.id === newItem.id
-                                    ? { ...item, title: conciseTitle, content: generatedText, isLoading: false }
-                                    : item
-                            )
-                        );
-                    }, 2500);
-                }}
-            />
-            {/* Customize Audio Modal */}
-            <CustomizeAudioModal
-                isOpen={isCustomizeAudioOpen}
-                onClose={() => setIsCustomizeAudioOpen(false)}
-                onGenerate={(title, voice) => {
-                    const newItem: GeneratedContent = {
-                        id: Date.now().toString(),
-                        title: title,
-                        type: 'audio',
-                        format: voice,
-                        createdAt: new Date(),
-                        isLoading: true
-                    };
-                    setGeneratedContent(prev => [newItem, ...prev]);
-                    setTimeout(() => {
-                        setGeneratedContent(prev =>
-                            prev.map(item =>
-                                item.id === newItem.id
-                                    ? { ...item, isLoading: false }
-                                    : item
-                            )
-                        );
-                    }, 3000);
+                onGenerate={async (_title, format, layout, focus, boosts) => {
+                    try {
+                        const newContent = await createContent(projectId, {
+                            action: 'text',
+                            sourceId: selectedSource?.id,
+                            promptInput: {
+                                format,
+                                language: 'English',
+                                length: 'Default',
+                                vibe: '',
+                                audience: '',
+                                layout,
+                                focus,
+                                boosts,
+                                includeCitations: false,
+                                sourceContext: selectedSource ? {
+                                    title: selectedSource.title,
+                                    summary: selectedSource.summary,
+                                    content: selectedSource.content,
+                                } : undefined,
+                            },
+                        });
+                        setGeneratedContent(prev => [newContent, ...prev]);
+                        if (newContent.isLoading) {
+                            startContentPolling(newContent.id);
+                        }
+                    } catch (error) {
+                        console.error('Failed to generate text:', error);
+                    }
                 }}
             />
             {/* Customize Image Modal */}
             <CustomizeImageModal
                 isOpen={isCustomizeImageOpen}
                 onClose={() => setIsCustomizeImageOpen(false)}
-                onGenerate={(title, style) => {
-                    const newItem: GeneratedContent = {
-                        id: (Date.now()).toString(),
-                        title: title,
-                        type: 'image',
-                        format: style,
-                        createdAt: new Date(),
-                        isLoading: true
-                    };
-                    setGeneratedContent(prev => [newItem, ...prev]);
-                    setTimeout(() => {
-                        setGeneratedContent(prev =>
-                            prev.map(item =>
-                                newItem.id === item.id
-                                    ? { ...item, isLoading: false }
-                                    : item
-                            )
-                        );
-                    }, 3000);
+                onGenerate={async (format, style, includeText, prompt, imageCount) => {
+                    try {
+                        const newContent = await createContent(projectId, {
+                            action: 'image',
+                            sourceId: selectedSource?.id,
+                            promptInput: {
+                                format,
+                                style,
+                                includeText,
+                                prompt,
+                                imageCount,
+                                sourceContext: selectedSource ? {
+                                    title: selectedSource.title,
+                                    summary: selectedSource.summary,
+                                } : undefined,
+                            },
+                        });
+                        setGeneratedContent(prev => [newContent, ...prev]);
+                        if (newContent.isLoading) {
+                            startContentPolling(newContent.id);
+                        }
+                    } catch (error) {
+                        console.error('Failed to generate image:', error);
+                    }
                 }}
             />
             {/* Header */}
@@ -837,30 +871,39 @@ export default function ProjectPage() {
 
                                     <div className={`border-t mx-4 ${isFundBuzz ? 'border-slate-100' : 'border-white/10'}`}></div>
 
-                                    {generatedContent.length > 0 && (
+                                    {selectedSource && generatedContent.length > 0 && (
                                         <div className="p-4 pb-2">
                                             <h2 className={`font-semibold ${isFundBuzz ? 'text-slate-900' : 'text-gray-200'}`}>Generated Content</h2>
                                         </div>
                                     )}
 
-                                    <div className="px-4 pb-4">
-                                        <ContentGenerated
-                                            items={generatedContent}
-                                            onDelete={(id) => {
-                                                setGeneratedContent(prev => prev.filter(item => item.id !== id));
-                                            }}
-                                            onSelect={(content) => setSelectedContent(content)}
-                                            onAddToSources={handleAddToSources}
-                                            onUpdateStatus={handleUpdateContentStatus}
-                                        />
-                                    </div>
+                                    {selectedSource ? (
+                                        <>
+                                            <div className="px-4 pb-4">
+                                                <ContentGenerated
+                                                    items={generatedContent}
+                                                    onDelete={handleDeleteContent}
+                                                    onSelect={(content) => setSelectedContent(content)}
+                                                    onAddToSources={handleAddToSources}
+                                                    onUpdateStatus={handleUpdateContentStatus}
+                                                />
+                                            </div>
 
-                                    {generatedContent.length === 0 && (
+                                            {generatedContent.length === 0 && (
+                                                <div className="mt-12 text-center px-4">
+                                                    <div className="w-8 h-8 mx-auto mb-3 text-gray-600">
+                                                        <Zap className="w-full h-full opacity-20" />
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mb-1">No content generated for this source yet.</p>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
                                         <div className="mt-12 text-center px-4">
                                             <div className="w-8 h-8 mx-auto mb-3 text-gray-600">
-                                                <Zap className="w-full h-full opacity-20" />
+                                                <FileText className="w-full h-full opacity-20" />
                                             </div>
-                                            <p className="text-xs text-gray-500 mb-1">Studio output will be saved here.</p>
+                                            <p className="text-xs text-gray-500 mb-1">Select a source to see generated content.</p>
                                         </div>
                                     )}
                                 </div>

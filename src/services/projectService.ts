@@ -1,6 +1,4 @@
 import { projectRepository } from '@/repositories/projectRepository';
-import { sourceRepository } from '@/repositories/sourceRepository';
-import { contentRepository } from '@/repositories/contentRepository';
 import type { Source } from '@/types/source';
 import type { ProjectMetadata } from '@/types/project';
 
@@ -48,10 +46,13 @@ export const projectService = {
         type: c.type,
         format: c.format,
         content: c.content,
+        url: c.url ?? null,
         complianceStatus: c.complianceStatus,
         assignee: c.assignee,
         createdAt: c.createdAt,
-        isLoading: false,
+        isLoading: c.processingStatus === 'processing',
+        processingStatus: c.processingStatus,
+        sourceId: c.sourceId ?? null,
       })),
     };
   },
@@ -74,18 +75,6 @@ export const projectService = {
     title?: string;
     searchQuery?: string;
     summaryData?: unknown;
-    sources?: Source[];
-    generatedContent?: Array<{
-      id: string;
-      title: string;
-      type: string;
-      format?: string;
-      content?: string;
-      complianceStatus?: string;
-      assignee?: string;
-      createdAt?: string | Date;
-      isLoading?: boolean;
-    }>;
   }) {
     await projectRepository.update(id, {
       title: body.title,
@@ -93,16 +82,7 @@ export const projectService = {
       summaryData: body.summaryData,
     });
 
-    // Sources are now managed via the source API (POST /api/projects/:id/sources).
-    // Skip source sync here to avoid deleting sources that are being processed by Diaflow.
-
-    // Sync generated content: delete existing, insert new
-    if (body.generatedContent !== undefined) {
-      await contentRepository.deleteByProjectId(id);
-      if (body.generatedContent.length > 0) {
-        await contentRepository.createMany(id, body.generatedContent);
-      }
-    }
+    // Sources and content are managed via their own APIs.
   },
 
   async deleteProject(id: string) {

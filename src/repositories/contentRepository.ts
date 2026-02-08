@@ -1,48 +1,77 @@
 import { prisma } from '@/lib/prisma';
 
-interface ContentInput {
-  id: string;
-  title: string;
-  type: string;
-  format?: string;
-  content?: string;
-  complianceStatus?: string;
-  assignee?: string;
-  createdAt?: string | Date;
-  isLoading?: boolean;
-}
-
 export const contentRepository = {
-  async deleteByProjectId(projectId: string) {
-    return prisma.generatedContent.deleteMany({ where: { projectId } });
-  },
-
-  async createMany(projectId: string, contents: ContentInput[]) {
-    return prisma.generatedContent.createMany({
-      data: contents
-        .filter((c) => !c.isLoading)
-        .map((c) => ({
-          id: c.id,
-          title: c.title,
-          type: c.type,
-          format: c.format,
-          content: c.content,
-          complianceStatus: c.complianceStatus || 'Draft',
-          assignee: c.assignee,
-          createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
-          projectId,
-        })),
+  async findByProjectId(projectId: string) {
+    return prisma.generatedContent.findMany({
+      where: { projectId, processingStatus: { not: 'failed' } },
+      orderBy: { createdAt: 'desc' },
     });
   },
 
-  async update(contentId: string, data: { title?: string; complianceStatus?: string; assignee?: string }) {
-    return prisma.generatedContent.update({
-      where: { id: contentId },
+  async findBySourceId(sourceId: string) {
+    return prisma.generatedContent.findMany({
+      where: { sourceId, processingStatus: { not: 'failed' } },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
+
+  async findById(id: string) {
+    return prisma.generatedContent.findUnique({ where: { id } });
+  },
+
+  async create(data: {
+    projectId: string;
+    title: string;
+    type: string;
+    format?: string;
+    content?: string;
+    complianceStatus?: string;
+    assignee?: string;
+    sourceId?: string;
+    url?: string;
+    diaflowSessionId?: string;
+    processingStatus?: string;
+  }) {
+    return prisma.generatedContent.create({
       data: {
+        projectId: data.projectId,
         title: data.title,
-        complianceStatus: data.complianceStatus,
+        type: data.type,
+        format: data.format,
+        content: data.content,
+        url: data.url,
+        complianceStatus: data.complianceStatus || 'Draft',
         assignee: data.assignee,
+        sourceId: data.sourceId,
+        diaflowSessionId: data.diaflowSessionId,
+        processingStatus: data.processingStatus || 'completed',
       },
     });
+  },
+
+  async update(
+    id: string,
+    data: Partial<{
+      title: string;
+      content: string;
+      url: string;
+      complianceStatus: string;
+      assignee: string;
+      processingStatus: string;
+      diaflowSessionId: string;
+    }>,
+  ) {
+    return prisma.generatedContent.update({
+      where: { id },
+      data,
+    });
+  },
+
+  async delete(id: string) {
+    return prisma.generatedContent.delete({ where: { id } });
+  },
+
+  async deleteByProjectId(projectId: string) {
+    return prisma.generatedContent.deleteMany({ where: { projectId } });
   },
 };

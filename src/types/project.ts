@@ -6,10 +6,13 @@ export interface GeneratedContent {
     type: 'text' | 'image' | 'audio' | 'video' | 'note';
     format?: string;
     content?: string;
+    url?: string | null;
     createdAt: Date;
     isLoading: boolean;
+    processingStatus?: string;
     complianceStatus?: 'Draft' | 'Pending Review' | 'Approved';
     assignee?: string;
+    sourceId?: string | null;
 }
 
 export interface Project {

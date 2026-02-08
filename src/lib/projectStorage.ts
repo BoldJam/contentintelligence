@@ -1,4 +1,4 @@
-import type { Project, ProjectMetadata } from '@/types/project';
+import type { Project, ProjectMetadata, GeneratedContent } from '@/types/project';
 import type { Source } from '@/types/source';
 import type { Chat, ChatWithMessages, ChatMessage } from '@/types/chat';
 
@@ -12,7 +12,6 @@ export async function saveProject(project: Project): Promise<void> {
             searchQuery: project.searchQuery,
             summaryData: project.summaryData,
             sources: project.sources,
-            generatedContent: project.generatedContent,
         }),
     });
 }
@@ -83,6 +82,58 @@ export async function updateContent(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contentId, ...updates }),
     });
+}
+
+// Create content (note, text generation, or image generation)
+export async function createContent(
+    projectId: string,
+    payload: {
+        action: 'note' | 'text' | 'image';
+        content?: string;
+        sourceId?: string;
+        promptInput?: unknown;
+    }
+): Promise<GeneratedContent> {
+    const res = await fetch(`/api/projects/${projectId}/content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Failed to create content');
+    return res.json();
+}
+
+// List content for a project (optionally filtered by source)
+export async function listContent(
+    projectId: string,
+    sourceId?: string
+): Promise<GeneratedContent[]> {
+    const url = sourceId
+        ? `/api/projects/${projectId}/content?sourceId=${sourceId}`
+        : `/api/projects/${projectId}/content`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    return res.json();
+}
+
+// Delete a single content item
+export async function deleteContent(
+    projectId: string,
+    contentId: string
+): Promise<void> {
+    await fetch(`/api/projects/${projectId}/content?contentId=${contentId}`, {
+        method: 'DELETE',
+    });
+}
+
+// Poll content processing status
+export async function checkContentStatus(
+    projectId: string,
+    contentId: string
+): Promise<GeneratedContent> {
+    const res = await fetch(`/api/projects/${projectId}/content/${contentId}/status`);
+    if (!res.ok) throw new Error('Failed to check content status');
+    return res.json();
 }
 
 // --- Chat API ---

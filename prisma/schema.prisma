@@ -45,6 +45,8 @@ model Source {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  generatedContent GeneratedContent[]
+
   @@index([projectId])
   @@index([diaflowSessionId])
 }
@@ -54,15 +56,26 @@ model GeneratedContent {
   title            String
   type             String
   format           String?
-  content          String?
+  content          String?  @db.Text
+  url              String?
   complianceStatus String   @default("Draft")
   assignee         String?
   createdAt        DateTime @default(now())
+
+  // Link to source
+  sourceId String?
+  source   Source?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  // Diaflow processing
+  diaflowSessionId String?
+  processingStatus String   @default("completed")
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([sourceId])
+  @@index([diaflowSessionId])
 }
 
 model Chat {
