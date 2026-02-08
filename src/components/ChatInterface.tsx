@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Bookmark, ArrowRight, LayoutTemplate, TrendingUp, User, Bot, ExternalLink, FileText, Youtube, Mic } from 'lucide-react';
+import { Copy, Bookmark, ArrowRight, LayoutTemplate, TrendingUp, User, Bot, ExternalLink, FileText, Youtube, Mic, X } from 'lucide-react';
 import { useProduct } from '@/lib/productContext';
 import ReactMarkdown from 'react-markdown';
 import type { Source } from '@/types/source';
@@ -34,6 +34,7 @@ export default function ChatInterface({
     const [isTyping, setIsTyping] = useState(false);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+    const [showSourceDetail, setShowSourceDetail] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { currentProduct } = useProduct();
     const isFundBuzz = currentProduct === 'fundbuzz';
@@ -208,7 +209,10 @@ export default function ChatInterface({
                     className="max-w-3xl mx-auto space-y-5"
                 >
                     {/* Compact Source Card */}
-                    <div className={`rounded-xl p-4 border ${isFundBuzz ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#1e293b] border-white/10'}`}>
+                    <div
+                        onClick={() => setShowSourceDetail(true)}
+                        className={`rounded-xl p-4 border cursor-pointer transition-all ${isFundBuzz ? 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300' : 'bg-[#1e293b] border-white/10 hover:border-white/20'}`}
+                    >
                         <div className="flex items-start gap-3">
                             <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isFundBuzz ? 'bg-slate-100' : 'bg-white/10'}`}>
                                 {sourceIcon}
@@ -221,13 +225,80 @@ export default function ChatInterface({
                                     {[selectedSource.authors, selectedSource.year].filter(Boolean).join(' · ')}
                                 </p>
                                 {selectedSource.summary && (
-                                    <p className={`text-xs mt-2 line-clamp-2 ${isFundBuzz ? 'text-slate-600' : 'text-gray-300'}`}>
-                                        {selectedSource.summary.slice(0, 150)}...
+                                    <p className={`text-xs mt-2 line-clamp-3 ${isFundBuzz ? 'text-slate-600' : 'text-gray-300'}`}>
+                                        {selectedSource.summary.slice(0, 300)}{selectedSource.summary.length > 300 ? '...' : ''}
                                     </p>
                                 )}
                             </div>
                         </div>
                     </div>
+
+                    {/* Source Detail Popup */}
+                    <AnimatePresence>
+                        {showSourceDetail && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                                onClick={() => setShowSourceDetail(false)}
+                            >
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.2 }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={`w-full max-w-2xl max-h-[80vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${isFundBuzz ? 'bg-white' : 'bg-[#1e293b] border border-white/10'}`}
+                                >
+                                    {/* Header */}
+                                    <div className={`flex items-start gap-3 p-6 pb-4 border-b ${isFundBuzz ? 'border-slate-200' : 'border-white/10'}`}>
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isFundBuzz ? 'bg-slate-100' : 'bg-white/10'}`}>
+                                            {sourceIcon}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className={`font-semibold text-base leading-tight ${isFundBuzz ? 'text-slate-900' : 'text-white'}`}>
+                                                {selectedSource.title}
+                                            </h3>
+                                            <p className={`text-sm mt-1 ${isFundBuzz ? 'text-slate-500' : 'text-gray-400'}`}>
+                                                {[selectedSource.authors, selectedSource.year].filter(Boolean).join(' · ')}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => setShowSourceDetail(false)}
+                                            className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${isFundBuzz ? 'hover:bg-slate-100 text-slate-400' : 'hover:bg-white/10 text-gray-400'}`}
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
+
+                                    {/* Body */}
+                                    <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+                                        {selectedSource.summary && (
+                                            <div className="mb-4">
+                                                <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`}>
+                                                    Summary
+                                                </h4>
+                                                <p className={`text-sm leading-relaxed ${isFundBuzz ? 'text-slate-700' : 'text-gray-300'}`}>
+                                                    {selectedSource.summary}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {selectedSource.content && (
+                                            <div>
+                                                <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`}>
+                                                    Content
+                                                </h4>
+                                                <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isFundBuzz ? 'text-slate-700' : 'text-gray-300'}`}>
+                                                    {selectedSource.content}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Suggested Questions (only when no messages yet) */}
                     {messages.length === 0 && !isLoadingQuestions && suggestedQuestions.length > 0 && (

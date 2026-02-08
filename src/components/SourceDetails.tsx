@@ -19,7 +19,7 @@ const typeConfig: Record<string, { icon: any; label: string; color: string }> = 
 };
 
 export default function SourceDetails({ source, onBack }: SourceDetailsProps) {
-    const [summaryExpanded, setSummaryExpanded] = useState(true);
+    const [summaryExpanded, setSummaryExpanded] = useState(false);
     const [transcriptExpanded, setTranscriptExpanded] = useState(false);
     const { currentProduct } = useProduct();
     const isFundBuzz = currentProduct === 'fundbuzz';

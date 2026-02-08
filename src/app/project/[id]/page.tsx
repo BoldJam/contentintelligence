@@ -377,8 +377,11 @@ export default function ProjectPage() {
             <CustomizeTextModal
                 isOpen={isCustomizeTextOpen}
                 onClose={() => setIsCustomizeTextOpen(false)}
-                onGenerate={async (_title, format, layout, focus, boosts) => {
+                sourceType={selectedSource?.type}
+                hasTranscript={!!selectedSource?.transcript}
+                onGenerate={async (_title, format, layout, focus, boosts, contextSource) => {
                     try {
+                        const useTranscript = contextSource === 'transcript' && selectedSource?.transcript;
                         const newContent = await createContent(projectId, {
                             action: 'text',
                             sourceId: selectedSource?.id,
@@ -392,11 +395,10 @@ export default function ProjectPage() {
                                 focus,
                                 boosts,
                                 includeCitations: false,
-                                sourceContext: selectedSource ? {
-                                    title: selectedSource.title,
-                                    summary: selectedSource.summary,
-                                    content: selectedSource.content,
-                                } : undefined,
+                                sourceContext: selectedSource ? (useTranscript
+                                    ? { title: selectedSource.title, content: selectedSource.transcript }
+                                    : { title: selectedSource.title, summary: selectedSource.summary, content: selectedSource.content }
+                                ) : undefined,
                             },
                         });
                         setGeneratedContent(prev => [newContent, ...prev]);

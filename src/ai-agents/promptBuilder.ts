@@ -60,7 +60,7 @@ export function buildTextPrompt(input: TextPromptInput): string {
     if (input.sourceContext.summary) {
       parts.push(`Summary: ${input.sourceContext.summary}`);
     } else if (input.sourceContext.content) {
-      parts.push(`Content: ${input.sourceContext.content.slice(0, 3000)}`);
+      parts.push(`Content: ${input.sourceContext.content}`);
     }
   }
 
@@ -82,7 +82,7 @@ export function buildImagePrompt(input: ImagePromptInput): string {
     parts.push(`\n--- Source Context ---`);
     parts.push(`Topic: ${input.sourceContext.title}`);
     if (input.sourceContext.summary) {
-      parts.push(`Key points: ${input.sourceContext.summary.slice(0, 1000)}`);
+      parts.push(`Key points: ${input.sourceContext.summary}`);
     }
   }
 
