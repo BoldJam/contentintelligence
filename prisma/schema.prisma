@@ -70,6 +70,10 @@ model GeneratedContent {
   diaflowSessionId String?
   processingStatus String   @default("completed")
 
+  // Image binary storage (replaces expiring CDN URLs)
+  imageData     Bytes?
+  imageMimeType String?
+
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 

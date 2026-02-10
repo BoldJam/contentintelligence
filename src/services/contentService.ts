@@ -227,6 +227,26 @@ export const contentService = {
     );
 
     if (result.status === 'completed') {
+      // For images: download binary from CDN and store in DB
+      if (contentType === 'image' && result.imagePath) {
+        try {
+          const { data, mimeType } = await contentDiaflowAgent.downloadImageFromPath(result.imagePath);
+          const updated = await contentRepository.update(contentId, {
+            processingStatus: 'completed',
+            imageData: data,
+            imageMimeType: mimeType,
+            url: `/api/content/${contentId}/image`,
+          });
+          return toContent(updated);
+        } catch (downloadErr) {
+          console.error('Failed to download image from CDN:', downloadErr);
+          const updated = await contentRepository.update(contentId, {
+            processingStatus: 'failed',
+          });
+          return toContent(updated);
+        }
+      }
+
       const updated = await contentRepository.update(contentId, {
         processingStatus: 'completed',
         content: result.content ?? undefined,

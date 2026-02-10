@@ -1,4 +1,5 @@
 const DIAFLOW_BASE = 'https://api.diaflow.io/api/v1/builders';
+const PRESIGN_URL = 'https://api.diaflow.io/api/v1/auth/presign-token';
 const TEXT_BUILDER_ID = 'KSEvJWAKmC';
 const IMAGE_BUILDER_ID = 'sMuymSs16q';
 
@@ -20,6 +21,7 @@ export interface ContentDiaflowResult {
   status: 'processing' | 'completed' | 'failed';
   content: string | null;
   url: string | null;
+  imagePath: string | null;
   raw?: unknown;
 }
 
@@ -27,22 +29,61 @@ function getBuilderId(type: ContentGenerationType): string {
   return type === 'text' ? TEXT_BUILDER_ID : IMAGE_BUILDER_ID;
 }
 
+// --- Presign token cache ---
+let cachedPresignToken: {
+  Policy: string;
+  Signature: string;
+  KeyPairId: string;
+  expiresAt: number; // Unix seconds
+} | null = null;
+
+async function fetchPresignToken(): Promise<{ Policy: string; Signature: string; KeyPairId: string }> {
+  const now = Date.now() / 1000;
+  if (cachedPresignToken && now < cachedPresignToken.expiresAt - 60) {
+    return cachedPresignToken;
+  }
+
+  const jwt = process.env.DIAFLOW_JWT;
+  const workspaceId = process.env.DIAFLOW_WORKSPACE_ID || '7991';
+  if (!jwt) throw new Error('DIAFLOW_JWT environment variable is not set');
+
+  const res = await fetch(PRESIGN_URL, {
+    method: 'GET',
+    headers: {
+      'authorization': `Bearer ${jwt}`,
+      'workspace-id': workspaceId,
+      'content-type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Presign token API error ${res.status}: ${await res.text()}`);
+  }
+
+  const data = await res.json();
+  cachedPresignToken = {
+    Policy: data.Policy,
+    Signature: data.Signature,
+    KeyPairId: data['Key-Pair-Id'],
+    expiresAt: data.expires_at,
+  };
+
+  return cachedPresignToken;
+}
+
 /**
  * Build a full CDN URL from a Diaflow image path.
- * Uses env vars for the signed URL query params.
+ * Fetches fresh presign credentials dynamically.
  */
-function buildCdnUrl(path: string): string {
-  const policy = process.env.DIAFLOW_CDN_POLICY ?? '';
-  const signature = process.env.DIAFLOW_CDN_SIGNATURE ?? '';
-  const keyPairId = process.env.DIAFLOW_CDN_KEY_PAIR_ID ?? '';
-  return `https://cdn.diaflow.io/${path}?Policy=${policy}&Signature=${signature}&Key-Pair-Id=${keyPairId}`;
+async function buildCdnUrl(path: string): Promise<string> {
+  const token = await fetchPresignToken();
+  return `https://cdn.diaflow.io/${path}?Policy=${token.Policy}&Signature=${token.Signature}&Key-Pair-Id=${token.KeyPairId}`;
 }
 
 /**
  * Diaflow output node mapping by content generation type.
  *
  * Each builder has specific output nodes with keyed fields.
- * TODO: Fill in the actual node name and field key from the Diaflow builder config.
  */
 interface ContentOutputNodeConfig {
   node: string;
@@ -69,7 +110,7 @@ const OUTPUT_NODES: Record<ContentGenerationType, ContentOutputNodeConfig[]> = {
 function extractFromResult(
   result: Record<string, unknown>,
   type: ContentGenerationType,
-): { content: string | null; url: string | null } {
+): { content: string | null; url: string | null; imagePath: string | null } {
   const candidates = OUTPUT_NODES[type];
 
   for (const { node, contentKey } of candidates) {
@@ -79,13 +120,13 @@ function extractFromResult(
     const value = outputNode[contentKey];
     if (typeof value === 'string' && value.length > 0) {
       if (type === 'image') {
-        return { content: null, url: buildCdnUrl(value) };
+        return { content: null, url: null, imagePath: value };
       }
-      return { content: value, url: null };
+      return { content: value, url: null, imagePath: null };
     }
   }
 
-  return { content: null, url: null };
+  return { content: null, url: null, imagePath: null };
 }
 
 export const contentDiaflowAgent = {
@@ -137,8 +178,8 @@ export const contentDiaflowAgent = {
 
     if (isDone && data.result) {
       const resultObj = data.result as Record<string, unknown>;
-      const { content, url } = extractFromResult(resultObj, type);
-      return { sessionId, status: 'completed', content, url, raw: data };
+      const { content, url, imagePath } = extractFromResult(resultObj, type);
+      return { sessionId, status: 'completed', content, url, imagePath, raw: data };
     }
 
     return {
@@ -146,7 +187,24 @@ export const contentDiaflowAgent = {
       status: isFailed ? 'failed' : 'processing',
       content: null,
       url: null,
+      imagePath: null,
       raw: data,
     };
+  },
+
+  /**
+   * Download an image from Diaflow CDN using fresh presign credentials.
+   * Returns the raw image binary and its MIME type.
+   */
+  async downloadImageFromPath(path: string): Promise<{ data: Uint8Array<ArrayBuffer>; mimeType: string }> {
+    const cdnUrl = await buildCdnUrl(path);
+    const res = await fetch(cdnUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to download image from CDN: ${res.status}`);
+    }
+
+    const mimeType = res.headers.get('content-type') || 'image/png';
+    const arrayBuffer = await res.arrayBuffer();
+    return { data: new Uint8Array(arrayBuffer), mimeType };
   },
 };

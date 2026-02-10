@@ -1,10 +1,29 @@
 import { prisma } from '@/lib/prisma';
 
+// Select all fields except imageData for list/detail queries
+const contentFieldsWithoutImage = {
+  id: true,
+  title: true,
+  type: true,
+  format: true,
+  content: true,
+  url: true,
+  complianceStatus: true,
+  assignee: true,
+  createdAt: true,
+  sourceId: true,
+  diaflowSessionId: true,
+  processingStatus: true,
+  projectId: true,
+  imageMimeType: true,
+} as const;
+
 export const contentRepository = {
   async findByProjectId(projectId: string) {
     return prisma.generatedContent.findMany({
       where: { projectId, processingStatus: { not: 'failed' } },
       orderBy: { createdAt: 'desc' },
+      select: contentFieldsWithoutImage,
     });
   },
 
@@ -12,11 +31,22 @@ export const contentRepository = {
     return prisma.generatedContent.findMany({
       where: { sourceId, processingStatus: { not: 'failed' } },
       orderBy: { createdAt: 'desc' },
+      select: contentFieldsWithoutImage,
     });
   },
 
   async findById(id: string) {
-    return prisma.generatedContent.findUnique({ where: { id } });
+    return prisma.generatedContent.findUnique({
+      where: { id },
+      select: contentFieldsWithoutImage,
+    });
+  },
+
+  async findImageData(id: string) {
+    return prisma.generatedContent.findUnique({
+      where: { id },
+      select: { imageData: true, imageMimeType: true },
+    });
   },
 
   async create(data: {
@@ -46,6 +76,7 @@ export const contentRepository = {
         diaflowSessionId: data.diaflowSessionId,
         processingStatus: data.processingStatus || 'completed',
       },
+      select: contentFieldsWithoutImage,
     });
   },
 
@@ -59,11 +90,14 @@ export const contentRepository = {
       assignee: string;
       processingStatus: string;
       diaflowSessionId: string;
+      imageData: Uint8Array<ArrayBuffer>;
+      imageMimeType: string;
     }>,
   ) {
     return prisma.generatedContent.update({
       where: { id },
       data,
+      select: contentFieldsWithoutImage,
     });
   },
 
