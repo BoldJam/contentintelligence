@@ -132,7 +132,7 @@ export const diaflowAgent = {
     const data = await response.json();
 
     const isDone = data.status === 'Done' || data.status === 'completed';
-    const isFailed = data.status === 'failed' || data.status === 'Failed';
+    const isFailed = data.status === 'failed' || data.status === 'Failed' || data.status === 'Error';
 
     if (isDone && data.result) {
       const { transcript, summary } = extractFromResult(data.result, sourceType);
