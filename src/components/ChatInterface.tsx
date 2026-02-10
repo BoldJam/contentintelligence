@@ -225,9 +225,22 @@ export default function ChatInterface({
                                     {[selectedSource.authors, selectedSource.year].filter(Boolean).join(' · ')}
                                 </p>
                                 {selectedSource.summary && (
-                                    <p className={`text-xs mt-2 line-clamp-3 ${isFundBuzz ? 'text-slate-600' : 'text-gray-300'}`}>
-                                        {selectedSource.summary.slice(0, 300)}{selectedSource.summary.length > 300 ? '...' : ''}
-                                    </p>
+                                    <div className={`text-xs mt-2 line-clamp-3 ${isFundBuzz ? 'text-slate-600' : 'text-gray-300'}`}>
+                                        <ReactMarkdown
+                                            components={{
+                                                p: ({ ...props }) => <p className="mb-1 last:mb-0" {...props} />,
+                                                ul: ({ ...props }) => <ul className="list-disc ml-3 space-y-0.5" {...props} />,
+                                                ol: ({ ...props }) => <ol className="list-decimal ml-3 space-y-0.5" {...props} />,
+                                                li: ({ ...props }) => <li className="text-xs" {...props} />,
+                                                strong: ({ ...props }) => <strong className="font-semibold" {...props} />,
+                                                h1: ({ ...props }) => <span className="font-semibold" {...props} />,
+                                                h2: ({ ...props }) => <span className="font-semibold" {...props} />,
+                                                h3: ({ ...props }) => <span className="font-semibold" {...props} />,
+                                            }}
+                                        >
+                                            {selectedSource.summary.slice(0, 300) + (selectedSource.summary.length > 300 ? '...' : '')}
+                                        </ReactMarkdown>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -279,9 +292,36 @@ export default function ChatInterface({
                                                 <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isFundBuzz ? 'text-slate-400' : 'text-gray-500'}`}>
                                                     Summary
                                                 </h4>
-                                                <p className={`text-sm leading-relaxed ${isFundBuzz ? 'text-slate-700' : 'text-gray-300'}`}>
-                                                    {selectedSource.summary}
-                                                </p>
+                                                <div className={`text-sm leading-relaxed ${isFundBuzz ? 'text-slate-700' : 'text-gray-300'}`}>
+                                                    <ReactMarkdown
+                                                        components={{
+                                                            p: ({ ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                                            ul: ({ ...props }) => <ul className="list-disc ml-4 space-y-1 my-2" {...props} />,
+                                                            ol: ({ ...props }) => <ol className="list-decimal ml-4 space-y-1 my-2" {...props} />,
+                                                            li: ({ ...props }) => <li className="text-sm" {...props} />,
+                                                            strong: ({ ...props }) => <strong className="font-semibold" {...props} />,
+                                                            h1: ({ ...props }) => <h3 className="text-base font-bold mb-2 mt-3 first:mt-0" {...props} />,
+                                                            h2: ({ ...props }) => <h3 className="text-base font-bold mb-2 mt-3 first:mt-0" {...props} />,
+                                                            h3: ({ ...props }) => <h3 className="text-sm font-bold mb-1.5 mt-3 first:mt-0" {...props} />,
+                                                            a: ({ ...props }) => (
+                                                                <a
+                                                                    {...props}
+                                                                    className="text-blue-600 font-semibold hover:underline"
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                />
+                                                            ),
+                                                            code: ({ ...props }) => (
+                                                                <code className={`px-1 py-0.5 rounded text-xs ${isFundBuzz ? 'bg-slate-100' : 'bg-white/10'}`} {...props} />
+                                                            ),
+                                                            blockquote: ({ ...props }) => (
+                                                                <blockquote className={`border-l-2 pl-3 my-2 italic ${isFundBuzz ? 'border-slate-300 text-slate-500' : 'border-white/20 text-gray-400'}`} {...props} />
+                                                            ),
+                                                        }}
+                                                    >
+                                                        {selectedSource.summary}
+                                                    </ReactMarkdown>
+                                                </div>
                                             </div>
                                         )}
                                         {selectedSource.content && (

@@ -23,7 +23,7 @@ import SourceDetails from '@/components/SourceDetails';
 import type { Source } from '@/types/source';
 import type { Chat, ChatMessage, ChatWithMessages } from '@/types/chat';
 import ChatInterface from '@/components/ChatInterface';
-import { loadProject, saveProject, createNewProject, addSource as addSourceAPI, checkSourceStatus, createContent, listContent, deleteContent, checkContentStatus, listChats, getChat, createChat, deleteChat } from '@/lib/projectStorage';
+import { loadProject, saveProject, createNewProject, addSource as addSourceAPI, checkSourceStatus, deleteSource, createContent, listContent, deleteContent, checkContentStatus, updateContent, listChats, getChat, createChat, deleteChat } from '@/lib/projectStorage';
 import type { Project, GeneratedContent } from '@/types/project';
 import ProductSwitcher from '@/components/ProductSwitcher';
 
@@ -222,8 +222,18 @@ export default function ProjectPage() {
             clearInterval(pollingTimers.current[sourceId]);
             delete pollingTimers.current[sourceId];
         }
+        // Optimistically remove from UI
         const updatedSources = sources.filter(s => s.id !== sourceId);
         setSources(updatedSources.length > 0 ? updatedSources : null);
+        // Delete from backend
+        try {
+            await deleteSource(projectId, sourceId);
+        } catch (error) {
+            console.error('Failed to delete source:', error);
+            setErrorMessage('Failed to delete source');
+            // Revert on failure
+            setSources(sources);
+        }
     };
 
     const handleSourceIconClick = (source: Source) => {
@@ -311,6 +321,9 @@ export default function ProjectPage() {
                 item.id === id ? { ...item, complianceStatus: status } : item
             )
         );
+        if (projectId !== 'new') {
+            updateContent(projectId, id, { complianceStatus: status });
+        }
     };
 
     const handleUpdateContentTitle = (id: string, newTitle: string) => {
@@ -319,6 +332,26 @@ export default function ProjectPage() {
                 item.id === id ? { ...item, title: newTitle } : item
             )
         );
+        if (selectedContent?.id === id) {
+            setSelectedContent(prev => prev ? { ...prev, title: newTitle } : prev);
+        }
+        if (projectId !== 'new') {
+            updateContent(projectId, id, { title: newTitle });
+        }
+    };
+
+    const handleSaveContent = (id: string, newContent: string) => {
+        setGeneratedContent(prev =>
+            prev.map(item =>
+                item.id === id ? { ...item, content: newContent } : item
+            )
+        );
+        if (selectedContent?.id === id) {
+            setSelectedContent(prev => prev ? { ...prev, content: newContent } : prev);
+        }
+        if (projectId !== 'new') {
+            updateContent(projectId, id, { content: newContent });
+        }
     };
 
     // Load content when selectedSource changes
@@ -837,6 +870,7 @@ export default function ProjectPage() {
                                 content={selectedContent}
                                 onBack={() => setSelectedContent(null)}
                                 onUpdateTitle={handleUpdateContentTitle}
+                                onSave={handleSaveContent}
                             />
                         ) : (
                             <>

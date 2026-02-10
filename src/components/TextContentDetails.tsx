@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Eye, Pencil, MoreHorizontal, Share2, Copy, Check, Download, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Eye, Pencil, MoreHorizontal, Share2, Copy, Check, Download, Image as ImageIcon, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import TiptapEditor from '@/components/TiptapEditor';
 import type { GeneratedContent } from '@/types/project';
 import { useProduct } from '@/lib/productContext';
 
@@ -8,25 +9,29 @@ interface TextContentDetailsProps {
     content: GeneratedContent;
     onBack: () => void;
     onUpdateTitle?: (id: string, newTitle: string) => void;
+    onSave?: (id: string, content: string) => void;
 }
 
-export default function TextContentDetails({ content, onBack, onUpdateTitle }: TextContentDetailsProps) {
+export default function TextContentDetails({ content, onBack, onUpdateTitle, onSave }: TextContentDetailsProps) {
     const [text, setText] = useState('');
     const [title, setTitle] = useState('');
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const originalTextRef = useRef('');
     const { currentProduct } = useProduct();
     const isFundBuzz = currentProduct === 'fundbuzz';
 
     useEffect(() => {
-        if (content.content) {
-            setText(content.content);
-        } else {
-            setText('');
-        }
+        const initial = content.content || '';
+        setText(initial);
+        originalTextRef.current = initial;
         setTitle(content.title);
         setIsEditing(false);
+        setIsDirty(false);
+        setSaved(false);
     }, [content]);
 
     const isImage = content.type === 'image';
@@ -43,6 +48,22 @@ export default function TextContentDetails({ content, onBack, onUpdateTitle }: T
             onUpdateTitle(content.id, title);
         } else {
             setTitle(content.title);
+        }
+    };
+
+    const handleEditorChange = (markdown: string) => {
+        setText(markdown);
+        setIsDirty(markdown !== originalTextRef.current);
+        setSaved(false);
+    };
+
+    const handleSave = () => {
+        if (onSave && isDirty) {
+            onSave(content.id, text);
+            originalTextRef.current = text;
+            setIsDirty(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
         }
     };
 
@@ -79,6 +100,21 @@ export default function TextContentDetails({ content, onBack, onUpdateTitle }: T
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {!isImage && isDirty && onSave && (
+                        <button
+                            onClick={handleSave}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                        >
+                            <Save className="w-4 h-4" />
+                            Save
+                        </button>
+                    )}
+                    {!isImage && saved && (
+                        <span className="flex items-center gap-1 text-green-500 text-sm font-medium">
+                            <Check className="w-4 h-4" />
+                            Saved
+                        </span>
+                    )}
                     {!isImage && (
                         <button
                             onClick={() => setIsEditing(!isEditing)}
@@ -119,9 +155,9 @@ export default function TextContentDetails({ content, onBack, onUpdateTitle }: T
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 p-8 overflow-y-auto">
-                {isImage ? (
-                    content.url ? (
+            {isImage ? (
+                <div className="flex-1 p-8 overflow-y-auto">
+                    {content.url ? (
                         <div className="flex items-center justify-center h-full">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -137,15 +173,18 @@ export default function TextContentDetails({ content, onBack, onUpdateTitle }: T
                                 {content.isLoading ? 'Generating image...' : 'Image unavailable'}
                             </p>
                         </div>
-                    )
-                ) : isEditing ? (
-                    <textarea
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        className={`w-full h-full bg-transparent resize-none focus:outline-none text-sm font-mono leading-relaxed ${isFundBuzz ? 'text-slate-900' : 'text-gray-300'}`}
-                        spellCheck={false}
+                    )}
+                </div>
+            ) : isEditing ? (
+                <div className="flex-1 overflow-hidden">
+                    <TiptapEditor
+                        content={text}
+                        onChange={handleEditorChange}
+                        editable={true}
                     />
-                ) : (
+                </div>
+            ) : (
+                <div className="flex-1 p-8 overflow-y-auto">
                     <div className={`prose max-w-none text-sm leading-relaxed ${isFundBuzz ? 'prose-slate' : 'prose-invert'}`}>
                         <ReactMarkdown
                             components={{
@@ -184,8 +223,8 @@ export default function TextContentDetails({ content, onBack, onUpdateTitle }: T
                             {text || '*No content yet*'}
                         </ReactMarkdown>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }

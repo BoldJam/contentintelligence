@@ -64,6 +64,14 @@ export async function addSource(
     return res.json();
 }
 
+// Delete a source
+export async function deleteSource(projectId: string, sourceId: string): Promise<void> {
+    const res = await fetch(`/api/projects/${projectId}/sources/${sourceId}`, {
+        method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete source');
+}
+
 // Poll a source's processing status
 export async function checkSourceStatus(projectId: string, sourceId: string): Promise<Source> {
     const res = await fetch(`/api/projects/${projectId}/sources/${sourceId}/status`);
@@ -75,7 +83,7 @@ export async function checkSourceStatus(projectId: string, sourceId: string): Pr
 export async function updateContent(
     projectId: string,
     contentId: string,
-    updates: { title?: string; complianceStatus?: string; assignee?: string }
+    updates: { title?: string; complianceStatus?: string; assignee?: string; content?: string }
 ): Promise<void> {
     await fetch(`/api/projects/${projectId}/content`, {
         method: 'PUT',

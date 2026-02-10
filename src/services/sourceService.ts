@@ -95,6 +95,13 @@ export const sourceService = {
   },
 
   /**
+   * Delete a source by ID.
+   */
+  async deleteSource(sourceId: string): Promise<void> {
+    await sourceRepository.delete(sourceId);
+  },
+
+  /**
    * List all sources for a project.
    */
   async listSources(projectId: string): Promise<Source[]> {

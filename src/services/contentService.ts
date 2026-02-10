@@ -85,7 +85,7 @@ export const contentService = {
 
   async updateContent(
     contentId: string,
-    updates: { title?: string; complianceStatus?: string; assignee?: string },
+    updates: { title?: string; complianceStatus?: string; assignee?: string; content?: string },
   ): Promise<GeneratedContent> {
     const record = await contentRepository.update(contentId, updates);
     return toContent(record);
